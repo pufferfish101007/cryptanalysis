@@ -72,10 +72,10 @@ export function monogramFitness(text, space=false) {
 export function tetragramFitness(text) {
     let sum = 0;
     const strippedText = text.toLowerCase().replaceAll(/[^a-z]/g, '');
-    for (let i = 0; i < strippedText.length - 4; i++) {
+    for (let i = 0; i < strippedText.length - 3; i++) {
         sum += tetragramFreqs[strippedText.substring(i, i + 4)] ?? -7;
     }
-    sum /= strippedText.length - 4;
+    sum /= strippedText.length - 3;
     return sum;
 }
 
