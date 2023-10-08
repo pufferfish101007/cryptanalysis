@@ -1,6 +1,13 @@
 import monogramFreqs from '../../public/MONOGRAMS.json';
-const sortedMonogramFreqsWithSpaces = Object.entries(monogramFreqs).sort((a, b) => a[0].charCodeAt(0) - b[0].charCodeAt(0)).map(a => a[1][1]);
-const sortedMonogramFreqsNoSpaces = sortedMonogramFreqsWithSpaces.splice(1);
+import tetragramFreqs from '../../public/TETRAGRAMS.json';
+const sortedMonogramFreqs = Object.entries(monogramFreqs).sort((a, b) => a[0].charCodeAt(0) - b[0].charCodeAt(0)).map(a => a[1][1]);
+
+/**
+ * calculates the inner product ('dot product') of 2 vectors
+ * @param {*} u - vector 1
+ * @param {*} v - vector 2; must have the same dimension as `u`
+ * @returns 
+ */
 function innerProduct(u, v) {
     let sum = 0;
     for (const i in u) {
@@ -8,9 +15,82 @@ function innerProduct(u, v) {
     }
     return sum;
 }
+
+/**
+ * calculates the cosine of the angle between 2 vectors
+ * @param {number[]} u - vector 1
+ * @param {number[]} v - vector 2; must have the same dimension as `u`
+ * @returns 
+ */
 function cosineVectorAngle(u, v) {
     return Math.acos(innerProduct(u, v) / Math.sqrt(innerProduct(u, u) * innerProduct(v, v)));
 }
-export function monogramFitness(monograms) {
-    return cosineVectorAngle(Object.entries(monograms).sort((a, b) => a[1] - b[1]).map(a => a[1]), ' ' in monograms ? sortedMonogramFreqsWithSpaces : sortedMonogramFreqsNoSpaces);
+
+/**
+ * Calculates the monogram fitness from a monogram frequency object. Between 0 and 1 (inclusive) - 1 is better
+ * @param {Object<string, number>} monograms - an object with keys as all of the letters and optionally a space, and the values as the relative frequency of the monogram (between 0 and 1)
+ * @returns {number}
+ */
+function monogramFreqFitness(monograms) {
+    return cosineVectorAngle(Object.entries(monograms).sort((a, b) => a[0].charCodeAt(0) - b[0].charCodeAt(0)).map(a => a[1]), sortedMonogramFreqs.splice(Number(' ' in monograms)));
+}
+
+/**
+ * Calculates the monogram fitness of a text. Between 0 and 1 (inclusive) - 1 is better
+ * @param {string} text - the text
+ * @param {boolean} [space=false] - whether to include spaces as a valid monogram to check the fitness of
+ * @returns {number}
+ */
+export function monogramFitness(text, space=false) {
+    const monograms = Object.create(null);
+    for (const l of ('qwertyuioplkjhgfdsazxcvbnm' + space ? ' ' : '')) monograms[l] = 0;
+    for (const l of text.toLowerCase().replaceAll(/[^a-z ]/g, '').replaceAll(' ', space ? ' ' : '')) monograms[l]++;
+    return monogramFreqFitness(monograms);
+}
+
+/**
+ * calculates the tetragram fitness of a text (no spaces!); the more negative this is, the less likely it is to be English text
+ * @param {string} text - the text to calculate the quadgram fitness for
+ * @returns number
+ */
+export function tetragramFitness(text) {
+    let sum = 0;
+    const strippedText = text.toLowerCase().replaceAll(/[^a-z]/g, '');
+    for (let i = 0; i < strippedText.length - 4; i++) {
+        sum += tetragramFreqs[strippedText.substring(i, i + 4)] ?? -7;
+    }
+    sum /= strippedText.length - 4;
+    return sum;
+}
+
+/**
+ * Calculates how likely that 2 random blocks of text are the same, multiplied by 26^m where m is the block size
+ * @param {string} text 
+ * @param {number} [blockSize=1] 
+ * @returns {number}
+ */
+export function normalizedIoC(text, blockSize=1) {
+    let strippedText = text.toLowerCase().replaceAll(/[^a-z]/g, '');
+    for (let i = 0; i < strippedText.length % blockSize; i++) {
+        strippedText += 'x';
+    }
+    const denominator = strippedText.length * (strippedText.length - 1);
+    let sum = 0;
+    /**
+     * @type {number[]}
+     */
+    let counts = Array.from({ length: 26 ** blockSize }).fill(0);
+    const blocks = strippedText.match(new RegExp(`.{${blockSize}}`, 'g')) ?? [];
+    for (const block of blocks) {
+        let index = 0;
+        for (let i = 0; i < block.length; i++) {
+            index += (26 ** i) * (block[i].charCodeAt(0) - 97);
+        }
+        counts[index]++;
+    }
+    for (const count of counts) {
+        sum += (count * (count -1));
+    }
+    sum /= denominator;
+    return sum * (26 ** blockSize);
 }
