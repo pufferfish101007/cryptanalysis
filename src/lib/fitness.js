@@ -1,6 +1,8 @@
-import monogramFreqs from '../../public/MONOGRAMS.json';
-import tetragramFreqs from '../../public/TETRAGRAMS.json';
-const sortedMonogramFreqs = Object.entries(monogramFreqs).sort((a, b) => a[0].charCodeAt(0) - b[0].charCodeAt(0)).map(a => a[1][1]);
+import monogramFreqs from '../resources/MONOGRAMS.json';
+import tetragramFreqs from '../resources/TETRAGRAMS.json';
+console.log(monogramFreqs)
+const sortedMonogramFreqsNoSpaces = Object.entries(monogramFreqs).filter(([k, _]) => k !== ' ').sort((a, b) => a[0].charCodeAt(0) - b[0].charCodeAt(0)).map(a => a[1][1]);
+const sortedMonogramFreqsWithSpaces = Object.entries(monogramFreqs).sort((a, b) => a[0].charCodeAt(0) - b[0].charCodeAt(0)).map(a => a[1][0]);
 
 /**
  * calculates the inner product ('dot product') of 2 vectors
@@ -23,7 +25,8 @@ function innerProduct(u, v) {
  * @returns 
  */
 function cosineVectorAngle(u, v) {
-    return Math.acos(innerProduct(u, v) / Math.sqrt(innerProduct(u, u) * innerProduct(v, v)));
+    console.log(innerProduct(u, v), innerProduct(u, u), innerProduct(v, v), Math.sqrt(innerProduct(u, u) * innerProduct(v, v)))
+    return innerProduct(u, v) / Math.sqrt(innerProduct(u, u) * innerProduct(v, v));
 }
 
 /**
@@ -32,7 +35,23 @@ function cosineVectorAngle(u, v) {
  * @returns {number}
  */
 function monogramFreqFitness(monograms) {
-    return cosineVectorAngle(Object.entries(monograms).sort((a, b) => a[0].charCodeAt(0) - b[0].charCodeAt(0)).map(a => a[1]), sortedMonogramFreqs.splice(Number(' ' in monograms)));
+    console.log(Object.entries(monograms).sort((a, b) => a[0].charCodeAt(0) - b[0].charCodeAt(0)).map(a => a[1]))
+    return cosineVectorAngle(Object.entries(monograms).sort((a, b) => a[0].charCodeAt(0) - b[0].charCodeAt(0)).map(a => a[1]), ' ' in monograms ? sortedMonogramFreqsWithSpaces : sortedMonogramFreqsNoSpaces);
+}
+
+/**
+ * calculates the monogram frequencies of a text
+ * @param {string} text 
+ * @param {boolean} [space=false] 
+ * @returns Object<string, number>
+ */
+export function monogramFrequencies(text, space=false) {
+    const monograms = Object.create(null);
+    for (const l of ('qwertyuioplkjhgfdsazxcvbnm' + (space ? ' ' : ''))) {
+        monograms[l] = 0;
+    }
+    for (const l of text.toLowerCase().replaceAll(/[^a-z ]/g, '').replaceAll(' ', space ? ' ' : '')) monograms[l]++;
+    return monograms;
 }
 
 /**
@@ -42,10 +61,7 @@ function monogramFreqFitness(monograms) {
  * @returns {number}
  */
 export function monogramFitness(text, space=false) {
-    const monograms = Object.create(null);
-    for (const l of ('qwertyuioplkjhgfdsazxcvbnm' + space ? ' ' : '')) monograms[l] = 0;
-    for (const l of text.toLowerCase().replaceAll(/[^a-z ]/g, '').replaceAll(' ', space ? ' ' : '')) monograms[l]++;
-    return monogramFreqFitness(monograms);
+    return monogramFreqFitness(monogramFrequencies(text, space)) || 0;
 }
 
 /**
@@ -92,5 +108,5 @@ export function normalizedIoC(text, blockSize=1) {
         sum += (count * (count -1));
     }
     sum /= denominator;
-    return sum * (26 ** blockSize);
+    return sum * (26 ** blockSize) || 0;
 }
