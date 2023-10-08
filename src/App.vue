@@ -14,9 +14,9 @@
     <div class="container vertical">ciphertext:<textarea v-model="cyphertext"></textarea></div>
     <div class="container vertical">plaintext:<textarea v-model="plaintext" disabled></textarea></div>
     <div>
-      <div>Monogram fitness: {{ monogramFitness(cyphertext) }}</div>
-      <div>Tetragram fitness: {{ tetragramFitness(cyphertext) }}</div>
-      <div>Index of coincidence: {{ normalizedIoC(cyphertext) }}</div>
+      <div>Monogram fitness: {{ monogramFitness(cyphertext).toFixed(2) }}</div>
+      <div>Tetragram fitness: {{ tetragramFitness(cyphertext).toFixed(2) }}</div>
+      <div>Index of coincidence: {{ normalizedIoC(cyphertext).toFixed(2) }}</div>
     </div>
     <div class="container vertical">
       <table>
