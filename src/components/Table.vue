@@ -1,12 +1,12 @@
 <script setup>
-  import { ref, watch } from 'vue';
+  import { ref, watch, computed } from 'vue';
   const props = defineProps({
     headings: Array,
     data: Array,
   });
   let sortBy = ref(null);
   let sortedData = computed(() => {
-    return data;
+    return props.data;
   });
 </script>
 
