@@ -76,7 +76,7 @@ export function tetragramFitness(text) {
         sum += tetragramFreqs[strippedText.substring(i, i + 4)] ?? -7;
     }
     sum /= strippedText.length - 3;
-    return sum;
+    return sum || 0;
 }
 
 /**
