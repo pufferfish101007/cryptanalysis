@@ -47,7 +47,7 @@ function monogramFreqFitness(monograms) {
  */
 export function monogramFrequencies(text, space=false) {
     const monograms = Object.create(null);
-    for (const l of ('qwertyuioplkjhgfdsazxcvbnm' + (space ? ' ' : ''))) {
+    for (const l of ('abcdefghijklmnopqrstuvwxyz' + (space ? ' ' : ''))) {
         monograms[l] = 0;
     }
     for (const l of text.toLowerCase().replaceAll(/[^a-z ]/g, '').replaceAll(' ', space ? ' ' : '')) monograms[l]++;
