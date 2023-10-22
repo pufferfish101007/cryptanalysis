@@ -1,19 +1,39 @@
 <script setup>
   import { ref, watch, computed } from 'vue';
   const props = defineProps({
-    headings: Array,
-    data: Array,
+    headings: {
+      type: Array,
+      required: true,
+    },
+    data: {
+      type: Array,
+      required: true,
+    },
+    sortBy: {
+      type: Number,
+      default: 0,
+    }
   });
-  let sortBy = ref(null);
+  let sortBy = ref(props.sortBy);
+  let sortAscending = ref(true);
   let sortedData = computed(() => {
-    return props.data;
+    // @ts-ignore
+    return props.data.toSorted((a, b) => a[sortBy.value] < b[sortBy.value] ? -(+sortAscending.value * 2 -1) : (b[sortBy.value] < a[sortBy.value] ? (+sortAscending.value * 2 -1) : 0));
   });
+  function setSortBy(index) {
+    if (sortBy.value === index) {
+      sortAscending.value = !sortAscending.value;
+    } else {
+      sortBy.value = index;
+      sortAscending.value = true;
+    }
+  }
 </script>
 
 <template>
   <table>
     <thead>
-      <th v-for='heading in props.headings'>{{ heading }}</th>
+      <th v-for='(heading, index) in props.headings' @click="setSortBy(index)">{{ heading }} <span class="sortarrow">{{ sortBy === index ? (sortAscending ? '↓' : '↑') : '&nbsp;' }}</span></th>
     </thead>
     <tr v-for="data in sortedData">
       <td v-for="el in data">{{ el }}</td>
@@ -25,5 +45,11 @@
   table, th, td {
     border: 1px solid black;
     border-collapse: collapse;
+  }
+  th {
+    cursor: pointer;
+  }
+  th > span.sortarrow {
+    font-family: monospace;
   }
 </style>
