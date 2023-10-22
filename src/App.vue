@@ -1,5 +1,5 @@
 <script setup>
-    import { normalizedIoC, monogramFitness, monogramFrequencies, tetragramFitness } from './lib/fitness.js';
+    import { normalizedIoC, monogramFitness, monogramFrequencies, tetragramFitness, entropy } from './lib/fitness.js';
     import Table from './components/Table.vue';
     import { ref, watch } from 'vue';
     const cyphertext = ref('');
@@ -18,6 +18,7 @@
       <div>Monogram fitness: {{ monogramFitness(cyphertext).toFixed(2) }}</div>
       <div>Tetragram fitness: {{ tetragramFitness(cyphertext).toFixed(2) }}</div>
       <div>Index of coincidence: {{ normalizedIoC(cyphertext).toFixed(2) }}</div>
+      <div>Entropy: {{ entropy(cyphertext).toFixed(2) }}</div>
     </div>
     <Table :headings="['letter', 'count', 'relative frequency']" :data="Object.entries(monogramFrequencies(cyphertext)).map(a => [...a, ((a[1] / cyphertext.length) || 0).toFixed(3)])"></Table>
   </div>

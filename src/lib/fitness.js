@@ -110,3 +110,30 @@ export function normalizedIoC(text, blockSize=1) {
     sum /= denominator;
     return sum * (26 ** blockSize) || 0;
 }
+
+/**
+ * @type {number}
+ */
+const log26Reciprocal = 1 / Math.log(2);
+
+/**
+ * Calculates the randomness of a text
+ * @param {string} text 
+ * @returns {number}
+ */
+export function entropy(text) {
+    let strippedText = text.toLowerCase().replaceAll(/[^a-z]/g, '');
+    let sum = 0;
+    /**
+     * @type {number[]}
+     */
+    let counts = Array.from({ length: 26 }).fill(0);;
+    for (const letter of strippedText) {
+        counts[letter.charCodeAt(0) - 97]++;
+    }
+    console.log(counts)
+    for (const count of counts) {
+        sum += ((count / strippedText.length) * (Math.log(count / strippedText.length) * log26Reciprocal)) || 0;
+    }
+    return -sum;
+}
