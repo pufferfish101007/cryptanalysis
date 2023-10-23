@@ -2,7 +2,10 @@
     import { normalizedIoC, monogramFitness, monogramFrequencies, tetragramFitness, entropy } from './lib/fitness.js';
     import Table from './components/Table.vue';
     import Info from './components/Info.vue';
+    import { decipherMonoAlphabeticSubstitution } from './lib/hill-climbing.js';
+    import HillClimbWorker from './lib/hill-climbing.js?worker'
     import { reactive, ref, watch } from 'vue';
+    const hillClimberWorker = new HillClimbWorker();
     const cyphertext = ref('');
     const plaintext = ref('');
     const ciphermode = ref('plaintext');
@@ -11,10 +14,7 @@
       cyphertext.value = cyphertext.value.toUpperCase();
       switch (ciphermode.value) {
         case 'monoalphabetic':
-          plaintext.value = cyphertext.value;
-          for (let i = 0; i < 26; i++) {
-            plaintext.value = plaintext.value.replaceAll('ABCDEFGHIJKLMNOPQRSTUCWXYZ'[i], subletters[i]);
-          }
+          plaintext.value = decipherMonoAlphabeticSubstitution(cyphertext.value, subletters);
           break;
         case 'plaintext':
         default:
@@ -40,6 +40,18 @@
       checkSubLetterContent(e.target);
       subletters[primaryKey.toLowerCase().charCodeAt(0) - 97] = e.target.textContent;
     }
+    hillClimberWorker.addEventListener('message', ({ data: { event, text, key, plaintext }}) => {
+      console.log('worker msg: %s (key?: %s)', event, key);
+      switch (event) {
+        case 'error':
+          console.error(text);
+          break;
+        case 'monoalphabetic-result':
+          subletters.forEach((_, i) => {
+            subletters[i] = key[i];
+          });
+      } 
+    });
 </script>
 
 <template>
@@ -56,6 +68,7 @@
       <div>Index of coincidence: {{ normalizedIoC(cyphertext).toFixed(2) }} <Info>Typical English IoC: 1.75</Info></div>
       <div>Entropy: {{ entropy(cyphertext).toFixed(2) }} <Info>A higher entropy value means it is more predictable and less random.</Info></div>
     </div>
+    <button v-if="ciphermode === 'monoalphabetic'" @click="hillClimberWorker.postMessage({ event: 'monoalphabetic', text: cyphertext })">carry out stochastic hill climbing attack for monoalphabetic substituion cipher</button>
     <details open>
       <summary>
         letter frequencies
