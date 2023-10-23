@@ -30,8 +30,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: setup node
-        - uses: actions/setup-node@v3
-          with:
-            node-version: '20.x'
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
       - name: Vite Github Pages Deployer
         uses: skywarth/vite-github-pages-deployer@v1.2.0
