@@ -1,7 +1,7 @@
 <script setup>
   import { ref, watch, computed } from 'vue';
   const props = defineProps({
-    headings: {
+    columns: {
       type: Array,
       required: true,
     },
@@ -14,6 +14,7 @@
       default: 0,
     }
   });
+  console.log(props.columns)
   let sortBy = ref(props.sortBy);
   let sortAscending = ref(true);
   let sortedData = computed(() => {
@@ -33,10 +34,10 @@
 <template>
   <table>
     <thead>
-      <th v-for='(heading, index) in props.headings' @click="setSortBy(index)">{{ heading }} <span class="sortarrow">{{ sortBy === index ? (sortAscending ? '↓' : '↑') : '&nbsp;' }}</span></th>
+      <th v-for='(column, index) in props.columns' @click="setSortBy(index)">{{ column.name ?? column.key }} <span class="sortarrow">{{ sortBy === index ? (sortAscending ? '↓' : '↑') : '&nbsp;' }}</span></th>
     </thead>
     <tr v-for="data in sortedData">
-      <td v-for="el in data">{{ el }}</td>
+      <td v-for="(el, index) in data"><slot :name="props.columns[index].key" :data="el" :primary-key="data[0]">{{ el }}</slot></td>
     </tr>
   </table>
 </template>

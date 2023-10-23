@@ -6,9 +6,9 @@ const sortedMonogramFreqsWithSpaces = Object.entries(monogramFreqs).sort((a, b) 
 
 /**
  * calculates the inner product ('dot product') of 2 vectors
- * @param {*} u - vector 1
- * @param {*} v - vector 2; must have the same dimension as `u`
- * @returns 
+ * @param {number[]} u - vector 1
+ * @param {number[]} v - vector 2; must have the same dimension as `u`
+ * @returns {number}
  */
 function innerProduct(u, v) {
     let sum = 0;
@@ -22,10 +22,9 @@ function innerProduct(u, v) {
  * calculates the cosine of the angle between 2 vectors
  * @param {number[]} u - vector 1
  * @param {number[]} v - vector 2; must have the same dimension as `u`
- * @returns 
+ * @returns {number}
  */
 function cosineVectorAngle(u, v) {
-    console.log(innerProduct(u, v), innerProduct(u, u), innerProduct(v, v), Math.sqrt(innerProduct(u, u) * innerProduct(v, v)))
     return innerProduct(u, v) / Math.sqrt(innerProduct(u, u) * innerProduct(v, v));
 }
 
@@ -35,22 +34,22 @@ function cosineVectorAngle(u, v) {
  * @returns {number}
  */
 function monogramFreqFitness(monograms) {
-    console.log(Object.entries(monograms).sort((a, b) => a[0].charCodeAt(0) - b[0].charCodeAt(0)).map(a => a[1]))
     return cosineVectorAngle(Object.entries(monograms).sort((a, b) => a[0].charCodeAt(0) - b[0].charCodeAt(0)).map(a => a[1]), ' ' in monograms ? sortedMonogramFreqsWithSpaces : sortedMonogramFreqsNoSpaces);
 }
 
 /**
  * calculates the monogram frequencies of a text
  * @param {string} text 
+ * @param {boolean} [upper=false] - whether
  * @param {boolean} [space=false] 
- * @returns Object<string, number>
+ * @returns {Object<string, number>}
  */
-export function monogramFrequencies(text, space=false) {
+export function monogramFrequencies(text, upper=false, space=false) {
     const monograms = Object.create(null);
-    for (const l of ('abcdefghijklmnopqrstuvwxyz' + (space ? ' ' : ''))) {
+    for (const l of ((upper ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' : 'abcdefghijklmnopqrstuvwxyz') + (space ? ' ' : ''))) {
         monograms[l] = 0;
     }
-    for (const l of text.toLowerCase().replaceAll(/[^a-z ]/g, '').replaceAll(' ', space ? ' ' : '')) monograms[l]++;
+    for (const l of text[upper ? 'toUpperCase' : 'toLowerCase']().replaceAll(/[^a-z ]/g, '').replaceAll(' ', space ? ' ' : '')) monograms[l]++;
     return monograms;
 }
 
@@ -61,13 +60,13 @@ export function monogramFrequencies(text, space=false) {
  * @returns {number}
  */
 export function monogramFitness(text, space=false) {
-    return monogramFreqFitness(monogramFrequencies(text, space)) || 0;
+    return monogramFreqFitness(monogramFrequencies(text, false, space)) || 0;
 }
 
 /**
  * calculates the tetragram fitness of a text (no spaces!); the more negative this is, the less likely it is to be English text
  * @param {string} text - the text to calculate the quadgram fitness for
- * @returns number
+ * @returns {number}
  */
 export function tetragramFitness(text) {
     let sum = 0;
@@ -111,17 +110,17 @@ export function normalizedIoC(text, blockSize=1) {
     return sum * (26 ** blockSize) || 0;
 }
 
-/**
+/**                                                                  
  * @type {number}
- */
+ */                                                                  
 const log26Reciprocal = 1 / Math.log(2);
 
 /**
  * Calculates the randomness of a text
- * @param {string} text 
+ * @param {string} text
  * @returns {number}
  */
-export function entropy(text) {
+export function entropy(text) {                                      
     let strippedText = text.toLowerCase().replaceAll(/[^a-z]/g, '');
     let sum = 0;
     /**
@@ -131,9 +130,8 @@ export function entropy(text) {
     for (const letter of strippedText) {
         counts[letter.charCodeAt(0) - 97]++;
     }
-    console.log(counts)
     for (const count of counts) {
         sum += ((count / strippedText.length) * (Math.log(count / strippedText.length) * log26Reciprocal)) || 0;
     }
     return -sum;
-}
+ }

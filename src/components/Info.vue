@@ -4,7 +4,7 @@
 </script>
 
 <template>
-    <span @click="dialog.showModal()">🛈</span>
+    <span @click="dialog.showModal()">ⓘ</span>
     <dialog ref="dialog">
         <slot default>info should be here but none was provided</slot>
         <br>
