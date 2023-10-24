@@ -1,27 +1,18 @@
 <script setup>
+    import Modal from './Modal.vue';
     import { ref } from 'vue';
     const dialog = ref();
 </script>
 
 <template>
-    <span @click="dialog.showModal()">ⓘ</span>
-    <dialog ref="dialog">
-        <slot default>info should be here but none was provided</slot>
-        <br>
-        <button autofocus @click="dialog.close()">close</button>
-    </dialog>
+    <span @click="dialog.show()" id="info-btn">ⓘ</span>
+    <Modal ref="dialog" closeonblur>
+        <slot>info should be here but none was provided</slot>
+    </Modal>
 </template>
 
 <style scoped>
-    span {
+    span#info-btn {
         cursor: pointer;
-    }
-    button {
-        margin-top: 1em;
-    }
-    ::backdrop {
-        background-color: black;
-        opacity: 0.5;
-        transition: 1s;
     }
 </style>

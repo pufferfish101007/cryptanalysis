@@ -2,14 +2,20 @@
     import { normalizedIoC, monogramFitness, monogramFrequencies, tetragramFitness, entropy } from './lib/fitness.js';
     import Table from './components/Table.vue';
     import Info from './components/Info.vue';
+    import Modal from './components/Modal.vue';
     import { decipherMonoAlphabeticSubstitution } from './lib/hill-climbing.js';
     import HillClimbWorker from './lib/hill-climbing.js?worker'
     import { reactive, ref, watch } from 'vue';
     const hillClimberWorker = new HillClimbWorker();
+    const modesEnum = [['plaintext', 'plaintext'], ['monoalphabetic', 'monoalphabetic substitution'], ['polyalphabetic', 'polyalphabetic substitution']];
     const cyphertext = ref('');
     const plaintext = ref('');
     const ciphermode = ref('plaintext');
     const subletters = reactive('abcdefghijklmnopqrstuvwxyz'.split(''));
+    const processingModal = ref();
+    const thresholdModal = ref();
+    const hillClimbThreshold = ref(25_000);
+    const hillClimbType = ref('');
     watch([cyphertext, subletters, ciphermode], () => {
       cyphertext.value = cyphertext.value.toUpperCase();
       switch (ciphermode.value) {
@@ -50,15 +56,33 @@
           subletters.forEach((_, i) => {
             subletters[i] = key[i];
           });
-      } 
+      }
+      processingModal.value.close();
     });
+    const hillClimb = (type) => {
+      hillClimbType.value = type;
+      thresholdModal.value.show();
+    }
+    const thresholdModalCloseListener = (val) => {
+            switch (val) {
+              case 'ok':
+                sendHillClimb(hillClimbType.value);
+                break;
+            }
+        };
+    const sendHillClimb = (type) => {
+      hillClimberWorker.postMessage({ event: type, text: cyphertext.value, threshold: hillClimbThreshold.value });
+      processingModal.value.show();
+    }
 </script>
 
 <template>
   <div class="container">
     <div id="ciphermodeselect">mode:
-      <input type="radio" v-model="ciphermode" id="mode-plaintext" value="plaintext" name="ciphermode"><label for="mode-plaintext">plaintext</label>
-      <input type="radio" v-model="ciphermode" id="mode-monoalphabetic" value="monoalphabetic" name="ciphermode"><label for="mode-monoalphabetic">monoalphabetic substitution</label>
+      <template v-for="[id, display] in modesEnum">
+        <input type="radio" v-model="ciphermode" :id="`mode-${id}`" :value="id" name="ciphermode">
+        <label :for="`mode-${id}`">{{ display }}</label>
+      </template>
     </div>
     <div class="container vertical">ciphertext:<textarea v-model="cyphertext"></textarea></div>
     <div class="container vertical">plaintext:<textarea v-model="plaintext" disabled></textarea></div>
@@ -68,7 +92,7 @@
       <div>Index of coincidence: {{ normalizedIoC(cyphertext).toFixed(2) }} <Info>Typical English IoC: 1.75</Info></div>
       <div>Entropy: {{ entropy(cyphertext).toFixed(2) }} <Info>A higher entropy value means it is more predictable and less random.</Info></div>
     </div>
-    <button v-if="ciphermode === 'monoalphabetic'" @click="hillClimberWorker.postMessage({ event: 'monoalphabetic', text: cyphertext })">carry out stochastic hill climbing attack for monoalphabetic substituion cipher</button>
+    <button v-if="ciphermode === 'monoalphabetic'" @click="hillClimb('monoalphabetic')">carry out stochastic hill climbing attack for monoalphabetic substituion cipher</button>
     <details open>
       <summary>
         letter frequencies
@@ -83,6 +107,13 @@
       </Table>
     </details>
   </div>
+  <Modal ref="thresholdModal" :closeonblur="false" :close-buttons="['cancel', 'ok']" @close="thresholdModalCloseListener">
+    <label>
+      Hill climbing threshold
+      <input type="number" v-model="hillClimbThreshold">
+    </label>
+  </Modal>
+  <Modal ref="processingModal" :closeonblur="false" :close-buttons="[]"><span id="processing-span">processing</span></Modal>
 </template>
 
 <style scoped>
@@ -117,7 +148,7 @@
     transition: 0.5s;
     text-wrap: nowrap;
   }
-  label[for="mode-plaintext"] {
+  div#ciphermodeselect > label:nth-child(2) {
     border-radius: 2px 0 0 2px;
   }
   div#ciphermodeselect > label:last-child {
@@ -134,4 +165,23 @@
     margin: 0;
     width: 100%;
   }
+  span#processing-span::after {
+    content: "...";
+    font-family: monospace;
+    animation: loading 0.8s infinite linear;
+  }
+  @keyframes loading {
+    0% {
+      content: "\0000a0\0000a0\0000a0";
+    }
+    25% {
+      content: ".\0000a0\0000a0";
+    }
+    50% {
+      content: "..\0000a0";
+    }
+    75% {
+      content: "...";
+    }
+  } 
 </style>

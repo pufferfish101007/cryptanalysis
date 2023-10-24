@@ -9,11 +9,11 @@ import { tetragramFitness } from './fitness.js';
 /**
  * 
  * @param {string} text 
- * @param {number} [threshold=10_000]
+ * @param {number} [threshold=25_000]
  * @returns {HillClimbResult}
  * 
  */
-function monoalphabeticSubstitutionHillClimb(text, threshold=10_000) {
+function monoalphabeticSubstitutionHillClimb(text, threshold=25_000) {
     let parentKey = 'abcdefghijklmnopqrstuvwxyz'.split('');
     let parentPlaintext = decipherMonoAlphabeticSubstitution(text, parentKey);
     let parentFitness = tetragramFitness(parentPlaintext);
@@ -77,10 +77,10 @@ function uniqueRandomPair(n) {
     return [r1, r2];
 }
 
-self.addEventListener('message', ({ data: { event, text } }) => {
+self.addEventListener('message', ({ data: { event, text, threshold } }) => {
     switch (event) {
         case 'monoalphabetic':
-            self.postMessage({ event: 'monoalphabetic-result', ...monoalphabeticSubstitutionHillClimb(text) });
+            self.postMessage({ event: 'monoalphabetic-result', ...monoalphabeticSubstitutionHillClimb(text, threshold) });
             break;
         default:
             self.postMessage({ event: 'error', text: 'invalid event' });
