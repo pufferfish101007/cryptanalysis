@@ -1,4 +1,5 @@
 import { tetragramFitness } from './fitness.js';
+import { decipherMonoAlphabeticSubstitution } from './cipher.js';
 
 /**
  * @typedef {Object} HillClimbResult
@@ -44,23 +45,6 @@ function monoalphabeticSubstitutionHillClimb(text, threshold = 25_000) {
     key: parentKey,
     plaintext: parentPlaintext,
   };
-}
-
-/**
- *
- * @param {string} text
- * @param {string|Array<string>} key
- * @returns {string}
- */
-export function decipherMonoAlphabeticSubstitution(text, key) {
-  let plaintext = text.toUpperCase();
-  if (Array.isArray(key)) {
-    key = key.map((l) => l.toLowerCase());
-  } else key = key.toLowerCase();
-  for (let i = 0; i < 26; i++) {
-    plaintext = plaintext.replaceAll('ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i], key[i]);
-  }
-  return plaintext;
 }
 
 /**
