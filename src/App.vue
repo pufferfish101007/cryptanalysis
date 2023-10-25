@@ -9,7 +9,10 @@
   import Table from './components/Table.vue';
   import Info from './components/Info.vue';
   import Modal from './components/Modal.vue';
-  import { decipherMonoAlphabeticSubstitution } from './lib/hill-climbing.js';
+  import {
+    decipherMonoAlphabeticSubstitution,
+    inverseSubstitutionKey,
+  } from './lib/cipher.js';
   import HillClimbWorker from './lib/hill-climbing.js?worker';
   import { computed, reactive, ref, watch, watchEffect } from 'vue';
   const hillClimberWorker = new HillClimbWorker();
@@ -94,7 +97,10 @@
     let p = plaintext.value;
     switch (ciphermode.value) {
       case 'monoalphabetic':
-        ciphertext.value = decipherMonoAlphabeticSubstitution(p, subletters);
+        ciphertext.value = decipherMonoAlphabeticSubstitution(
+          p,
+          inverseSubstitutionKey(subletters),
+        );
         break;
       case 'plaintext':
       default:
