@@ -185,6 +185,12 @@
       );
     }
   };
+  const quickCaesar = (e) => {
+    const offset = +e.target.key.value;
+    subletters.forEach((_, i) =>
+      subletters[i] = String.fromCharCode(((i + offset) % 26) + 97),
+    );
+  };
 </script>
 
 <template>
@@ -215,6 +221,16 @@
         /></label>
         <button type="submit">go</button>
       </form>
+    </div>
+    <div v-if="ciphermode === 'monoalphabetic'">
+      quick access keys:
+      <form @submit.prevent="quickCaesar">
+        <label
+          >caesar: <input type="number" name="key" value="3" style="max-width: 4em"
+        /></label>
+        <button type="submit">go</button>
+      </form>
+      <button @click="subletters.forEach((_, i) => subletters[i] = 'zyxwvutsrqponmlkjihgfedcba'[i])">atbash</button>
     </div>
     <div>
       <label> <input type="checkbox" v-model="encoding" /> Reverse? </label>
