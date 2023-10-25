@@ -11,6 +11,7 @@
   import Modal from './components/Modal.vue';
   import {
     decipherMonoAlphabeticSubstitution,
+    encipherPeriodicSubstitution,
     inverseSubstitutionKey,
   } from './lib/cipher.js';
   import HillClimbWorker from './lib/hill-climbing.js?worker';
@@ -34,6 +35,8 @@
   const thresholdModal = ref();
   const hillClimbThreshold = ref(25_000);
   const hillClimbType = ref('');
+  const noticeModal = ref();
+  const noticeModalMsg = ref('');
   const letterFreqsColumns = computed(() =>
     reactive(
       [
@@ -76,7 +79,6 @@
           (_) => 'abcdefghijklmnopqrstuvwxyz'.split(''),
         ),
       );
-      console.log(polySubLetters);
     }
   });
   watchEffect(() => {
@@ -85,6 +87,12 @@
     switch (ciphermode.value) {
       case 'monoalphabetic':
         plaintext.value = decipherMonoAlphabeticSubstitution(c, subletters);
+        break;
+      case 'polyalphabetic':
+        plaintext.value = encipherPeriodicSubstitution(
+          c,
+          polySubLetters.map(inverseSubstitutionKey),
+        );
         break;
       case 'plaintext':
       default:
@@ -101,6 +109,9 @@
           p,
           inverseSubstitutionKey(subletters),
         );
+        break;
+      case 'polyalphabetic':
+        ciphertext.value = encipherPeriodicSubstitution(p, polySubLetters);
         break;
       case 'plaintext':
       default:
@@ -164,6 +175,16 @@
     });
     processingModal.value.show();
   };
+  const quickVigenere = (e) => {
+    const key = e.target.key.value.toLowerCase();
+    polyalphabeticPeriod.value = key.length;
+    for (const i in key) {
+      const offset = key[i].charCodeAt(0) - 97;
+      polySubLetters[i] = Array.from({ length: 26 }, (_, i) =>
+        String.fromCharCode(((i + offset) % 26) + 97),
+      );
+    }
+  };
 </script>
 
 <template>
@@ -185,6 +206,15 @@
       <label
         >period: <input type="number" v-model="polyalphabeticPeriod"
       /></label>
+    </div>
+    <div v-if="ciphermode === 'polyalphabetic'">
+      quick access keys:
+      <form @submit.prevent="quickVigenere">
+        <label
+          >vigenère: <input type="text" name="key" style="max-width: 4em"
+        /></label>
+        <button type="submit">go</button>
+      </form>
     </div>
     <div>
       <label> <input type="checkbox" v-model="encoding" /> Reverse? </label>
@@ -265,6 +295,9 @@
   <Modal ref="processingModal" :closeonblur="false" :close-buttons="[]"
     ><span id="processing-span">processing</span></Modal
   >
+  <Modal ref="noticeModal" closeonblur>
+    {{ noticeModalMsg }}
+  </Modal>
 </template>
 
 <style scoped>
