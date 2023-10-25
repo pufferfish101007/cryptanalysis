@@ -11,14 +11,16 @@
   import Modal from './components/Modal.vue';
   import { decipherMonoAlphabeticSubstitution } from './lib/hill-climbing.js';
   import HillClimbWorker from './lib/hill-climbing.js?worker';
-  import { computed, reactive, ref, watch } from 'vue';
+  import { computed, reactive, ref, watch, watchEffect } from 'vue';
   const hillClimberWorker = new HillClimbWorker();
   const modesEnum = [
     ['plaintext', 'plaintext'],
     ['monoalphabetic', 'monoalphabetic substitution'],
     ['polyalphabetic', 'periodic polyalphabetic substitution'],
   ];
-  const cyphertext = ref('');
+  const encoding = ref(false);
+  const ciphertext = ref('');
+  const plaintext = ref('');
   const ciphermode = ref('plaintext');
   const subletters = reactive('abcdefghijklmnopqrstuvwxyz'.split(''));
   const polySubLetters = reactive(
@@ -48,8 +50,8 @@
     ),
   );
   const letterFreqsData = computed(() =>
-    Object.entries(monogramFrequencies(cyphertext.value, true)).map((a, i) =>
-      [...a, (a[1] / cyphertext.value.length || 0).toFixed(3)].concat(
+    Object.entries(monogramFrequencies(ciphertext.value, true)).map((a, i) =>
+      [...a, (a[1] / ciphertext.value.length || 0).toFixed(3)].concat(
         ciphermode.value === 'monoalphabetic'
           ? [subletters[i]]
           : ciphermode.value === 'polyalphabetic'
@@ -60,13 +62,11 @@
       ),
     ),
   );
-  watch(cyphertext, () => {
-    cyphertext.value = cyphertext.value.toUpperCase();
+  watch(ciphertext, () => {
+    ciphertext.value = ciphertext.value.toUpperCase();
   });
   watch(polyalphabeticPeriod, () => {
-    console.log('pap');
     if (polyalphabeticPeriod.value > polySubLetters.length) {
-      console.log('big pap');
       polySubLetters.push(
         ...Array.from(
           { length: polyalphabeticPeriod.value - polySubLetters.length },
@@ -76,15 +76,29 @@
       console.log(polySubLetters);
     }
   });
-  const plaintext = computed(() => {
-    let c = cyphertext.value;
+  watchEffect(() => {
+    if (encoding.value) return;
+    let c = ciphertext.value;
     switch (ciphermode.value) {
       case 'monoalphabetic':
-        return decipherMonoAlphabeticSubstitution(c, subletters);
+        plaintext.value = decipherMonoAlphabeticSubstitution(c, subletters);
         break;
       case 'plaintext':
       default:
-        return c.toLowerCase();
+        plaintext.value = c.toLowerCase();
+        break;
+    }
+  });
+  watchEffect(() => {
+    if (!encoding.value) return;
+    let p = plaintext.value;
+    switch (ciphermode.value) {
+      case 'monoalphabetic':
+        ciphertext.value = decipherMonoAlphabeticSubstitution(p, subletters);
+        break;
+      case 'plaintext':
+      default:
+        ciphertext.value = p.toUpperCase();
         break;
     }
   });
@@ -139,7 +153,7 @@
   const sendHillClimb = (type) => {
     hillClimberWorker.postMessage({
       event: type,
-      text: cyphertext.value,
+      text: ciphertext.value,
       threshold: hillClimbThreshold.value,
     });
     processingModal.value.show();
@@ -166,44 +180,47 @@
         >period: <input type="number" v-model="polyalphabeticPeriod"
       /></label>
     </div>
-    <div class="container vertical">
-      ciphertext:<textarea v-model="cyphertext"></textarea>
+    <div>
+      <label> <input type="checkbox" v-model="encoding" /> Reverse? </label>
     </div>
     <div class="container vertical">
-      plaintext:<textarea v-model="plaintext" disabled></textarea>
+      ciphertext:<textarea v-model="ciphertext" :disabled="encoding"></textarea>
+    </div>
+    <div class="container vertical">
+      plaintext:<textarea v-model="plaintext" :disabled="!encoding"></textarea>
     </div>
     <div>
       <div>
-        Monogram fitness: {{ monogramFitness(cyphertext).toFixed(2) }}
+        Monogram fitness: {{ monogramFitness(ciphertext).toFixed(2) }}
         <Info
-          >A monogram fitness close to 1 is simlar to standard English; close to
-          0 is not similar.</Info
+          >A monogram fitness close to 1 is similar to standard English; close
+          to 0 is not similar.</Info
         >
       </div>
       <div>
-        Tetragram fitness: {{ tetragramFitness(cyphertext).toFixed(2) }}
+        Tetragram fitness: {{ tetragramFitness(ciphertext).toFixed(2) }}
         <Info
           >Less negative is a better fit to English; more negative is a worse
           fit.</Info
         >
       </div>
       <div>
-        Index of coincidence: {{ normalizedIoC(cyphertext).toFixed(2) }}
+        Index of coincidence: {{ normalizedIoC(ciphertext).toFixed(2) }}
         <Info>Typical English IoC: 1.75</Info>
       </div>
       <div>
-        Entropy: {{ entropy(cyphertext).toFixed(2) }}
+        Entropy: {{ entropy(ciphertext).toFixed(2) }}
         <Info
-          >A higher entropy value means it is more predictable and less
-          random.</Info
+          >A higher entropy value means it is more random and less
+          predictable.</Info
         >
       </div>
     </div>
     <button
-      v-if="ciphermode === 'monoalphabetic'"
+      v-if="ciphermode === 'monoalphabetic' && !encoding"
       @click="hillClimb('monoalphabetic')"
     >
-      carry out stochastic hill climbing attack for monoalphabetic substituion
+      carry out stochastic hill climbing attack for monoalphabetic substitution
       cipher
     </button>
     <details open>

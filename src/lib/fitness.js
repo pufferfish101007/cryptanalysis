@@ -66,7 +66,7 @@ export function monogramFrequencies(text, upper = false, space = false) {
     monograms[l] = 0;
   }
   for (const l of text[upper ? 'toUpperCase' : 'toLowerCase']()
-    .replaceAll(/[^a-z ]/g, '')
+    .replaceAll(/[^a-z ]/gi, '')
     .replaceAll(' ', space ? ' ' : ''))
     monograms[l]++;
   return monograms;
