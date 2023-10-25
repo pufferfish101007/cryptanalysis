@@ -5,6 +5,7 @@
     monogramFrequencies,
     tetragramFitness,
     entropy,
+    calculateProbablePeriod
   } from './lib/fitness.js';
   import Table from './components/Table.vue';
   import Info from './components/Info.vue';
@@ -37,6 +38,7 @@
   const hillClimbType = ref('');
   const noticeModal = ref();
   const noticeModalMsg = ref('');
+  const probablePeriod = ref(null);
   const letterFreqsColumns = computed(() =>
     reactive(
       [
@@ -234,6 +236,9 @@
     </div>
     <div>
       <label> <input type="checkbox" v-model="encoding" /> Reverse? </label>
+    </div>
+    <div v-if="ciphermode === 'polyalphabetic'">
+      probable period: {{ probablePeriod ?? 'unknown' }} <button @click="calculateProbablePeriod">recalculate</button>
     </div>
     <div class="container vertical">
       ciphertext:<textarea v-model="ciphertext" :disabled="encoding"></textarea>

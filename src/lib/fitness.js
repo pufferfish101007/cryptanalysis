@@ -156,3 +156,7 @@ export function entropy(text) {
   }
   return -sum;
 }
+
+export function calculateProbablePeriod() {
+
+}
