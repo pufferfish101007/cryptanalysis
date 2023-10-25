@@ -5,26 +5,62 @@
     import Modal from './components/Modal.vue';
     import { decipherMonoAlphabeticSubstitution } from './lib/hill-climbing.js';
     import HillClimbWorker from './lib/hill-climbing.js?worker'
-    import { reactive, ref, watch } from 'vue';
+    import { computed, reactive, ref, watch } from 'vue';
     const hillClimberWorker = new HillClimbWorker();
-    const modesEnum = [['plaintext', 'plaintext'], ['monoalphabetic', 'monoalphabetic substitution'], ['polyalphabetic', 'polyalphabetic substitution']];
+    const modesEnum = [['plaintext', 'plaintext'], ['monoalphabetic', 'monoalphabetic substitution'], ['polyalphabetic', 'periodic polyalphabetic substitution']];
     const cyphertext = ref('');
-    const plaintext = ref('');
     const ciphermode = ref('plaintext');
     const subletters = reactive('abcdefghijklmnopqrstuvwxyz'.split(''));
+    const polySubLetters = reactive(Array.from({ length: 5 }, _ => 'abcdefghijklmnopqrstuvwxyz'.split('')))
+    const polyalphabeticPeriod = ref(5);
     const processingModal = ref();
     const thresholdModal = ref();
     const hillClimbThreshold = ref(25_000);
     const hillClimbType = ref('');
-    watch([cyphertext, subletters, ciphermode], () => {
+    const letterFreqsColumns = computed(() => reactive(
+      [
+        { key: 'cipherletter', name: 'ciphertext letter' },
+        { key: 'count' },
+        { key: 'freq', name: 'relative frequency' }
+      ].concat(ciphermode.value === 'monoalphabetic' ? 
+      [{ key: 'subletter0', name: 'substitution letter' }] : 
+      (ciphermode.value === 'polyalphabetic' ?
+        Array.from({ length: polyalphabeticPeriod.value }, (_, i) => ({ 
+            key: `subletter${i}`,
+            name: `substitution letter ${i + 1}`
+          })
+        ) : [])
+      )
+    ));
+    const letterFreqsData = computed(() => Object.entries(monogramFrequencies(cyphertext.value, true)).map((a, i) => [
+        ...a, 
+        ((a[1] / cyphertext.value.length) || 0).toFixed(3)].concat(
+          ciphermode.value === 'monoalphabetic' ? 
+          [subletters[i]] :
+          (ciphermode.value === 'polyalphabetic' ?
+            polySubLetters.slice(0, polyalphabeticPeriod.value ?? 0).map(s => s[i]) :
+            []))
+    ));
+    watch(cyphertext, () => {
       cyphertext.value = cyphertext.value.toUpperCase();
+    })
+    watch(polyalphabeticPeriod, () => {
+      console.log('pap')
+      if (polyalphabeticPeriod.value > polySubLetters.length) {
+        console.log('big pap')
+        polySubLetters.push(...Array.from({ length: polyalphabeticPeriod.value - polySubLetters.length }, _ => 'abcdefghijklmnopqrstuvwxyz'.split('')));
+        console.log(polySubLetters)
+      }
+    });
+    const plaintext = computed(() => {
+      let c = cyphertext.value;
       switch (ciphermode.value) {
         case 'monoalphabetic':
-          plaintext.value = decipherMonoAlphabeticSubstitution(cyphertext.value, subletters);
+          return decipherMonoAlphabeticSubstitution(c, subletters);
           break;
         case 'plaintext':
         default:
-          plaintext.value = cyphertext.value.toLowerCase();
+          return c.toLowerCase();
           break;
       }
     });
@@ -84,6 +120,7 @@
         <label :for="`mode-${id}`">{{ display }}</label>
       </template>
     </div>
+    <div v-if="ciphermode === 'polyalphabetic'"><label>period: <input type="number" v-model="polyalphabeticPeriod"></label></div>
     <div class="container vertical">ciphertext:<textarea v-model="cyphertext"></textarea></div>
     <div class="container vertical">plaintext:<textarea v-model="plaintext" disabled></textarea></div>
     <div>
@@ -98,10 +135,10 @@
         letter frequencies
       </summary>
       <Table
-        :columns="[{ key: 'cipherletter', name: 'ciphertext letter' }, { key: 'count' }, { key: 'freq', name: 'relative frequency' }].concat(ciphermode === 'monoalphabetic' ? [{ key: 'subletter', name: 'substitution letter' }] : [])"
-        :data="Object.entries(monogramFrequencies(cyphertext, true)).map((a, i) => [...a, ((a[1] / cyphertext.length) || 0).toFixed(3)].concat(ciphermode === 'monoalphabetic' ? [subletters[i]] : []))"
+        :columns="letterFreqsColumns"
+        :data="letterFreqsData"
       >
-        <template #subletter="{ data, primaryKey }">
+        <template v-for="i in polyalphabeticPeriod" #[`subletter${i-1}`]="{ data, primaryKey }">
           <div contenteditable @keydown.enter.prevent="$event.target.blur()" @input="subLetterInput($event, primaryKey)" @blur='subLetterBlur($event, primaryKey)' class="subletter-input">{{ data }}</div>
         </template>
       </Table>
