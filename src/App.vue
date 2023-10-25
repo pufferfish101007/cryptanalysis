@@ -216,13 +216,15 @@
         >
       </div>
     </div>
-    <button
-      v-if="ciphermode === 'monoalphabetic' && !encoding"
-      @click="hillClimb('monoalphabetic')"
-    >
-      carry out stochastic hill climbing attack for monoalphabetic substitution
-      cipher
-    </button>
+    <div>
+      <button
+        v-if="ciphermode === 'monoalphabetic' && !encoding"
+        @click="hillClimb('monoalphabetic')"
+      >
+        <!-- prettier-ignore -->
+        carry out stochastic hill climbing attack for monoalphabetic substitution cipher
+      </button>
+    </div>
     <details open>
       <summary>letter frequencies</summary>
       <Table :columns="letterFreqsColumns" :data="letterFreqsData">
