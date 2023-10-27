@@ -1,5 +1,6 @@
 import monogramFreqs from '../resources/MONOGRAMS.json';
 import tetragramFreqs from '../resources/TETRAGRAMS.json';
+import tetragramFreqs2 from '../resources/TETRAGRAMS2.json';
 console.log(monogramFreqs);
 const sortedMonogramFreqsNoSpaces = Object.entries(monogramFreqs)
   .filter(([k, _]) => k !== ' ')
@@ -98,6 +99,27 @@ export function tetragramFitness(text) {
 }
 
 /**
+ * calculates the tetragram fitness of a text (no spaces!); the more negative this is, the less likely it is to be English text
+ * @param {string} text - the text to calculate the quadgram fitness for
+ * @param {number[][][][]} [freqs=tetragramFreqs2] - the standard tetragram frequencies
+ * @returns {number}
+ */
+export function tetragramFitness2(text, freqs = tetragramFreqs2) {
+  let sum = 0;
+  const strippedText = text.toLowerCase().replaceAll(/[^a-z]/g, '');
+  for (let i = 0; i < strippedText.length - 3; i++) {
+    sum -=
+      tetragramFreqs2[strippedText.charCodeAt(i) - 97][
+        strippedText.charCodeAt(i + 1) - 97
+      ][strippedText.charCodeAt(i + 2) - 97][
+        strippedText.charCodeAt(i + 3) - 97
+      ];
+  }
+  sum /= strippedText.length - 3;
+  return sum || 0;
+}
+
+/**
  * Calculates how likely that 2 random blocks of text are the same, multiplied by 26^m where m is the block size
  * @param {string} text
  * @param {number} [blockSize=1]
@@ -157,6 +179,4 @@ export function entropy(text) {
   return -sum;
 }
 
-export function calculateProbablePeriod() {
-
-}
+export function calculateProbablePeriod() {}

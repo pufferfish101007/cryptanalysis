@@ -50,4 +50,3 @@ export function encipherPeriodicSubstitution(text, key) {
   }
   return plaintext.join('');
 }
-

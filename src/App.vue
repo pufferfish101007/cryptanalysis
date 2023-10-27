@@ -5,7 +5,7 @@
     monogramFrequencies,
     tetragramFitness,
     entropy,
-    calculateProbablePeriod
+    calculateProbablePeriod,
   } from './lib/fitness.js';
   import Table from './components/Table.vue';
   import Info from './components/Info.vue';
@@ -189,8 +189,8 @@
   };
   const quickCaesar = (e) => {
     const offset = +e.target.key.value;
-    subletters.forEach((_, i) =>
-      subletters[i] = String.fromCharCode(((i + offset) % 26) + 97),
+    subletters.forEach(
+      (_, i) => (subletters[i] = String.fromCharCode(((i + offset) % 26) + 97)),
     );
   };
 </script>
@@ -228,17 +228,27 @@
       quick access keys:
       <form @submit.prevent="quickCaesar">
         <label
-          >caesar: <input type="number" name="key" value="3" style="max-width: 4em"
+          >caesar:
+          <input type="number" name="key" value="3" style="max-width: 4em"
         /></label>
         <button type="submit">go</button>
       </form>
-      <button @click="subletters.forEach((_, i) => subletters[i] = 'zyxwvutsrqponmlkjihgfedcba'[i])">atbash</button>
+      <button
+        @click="
+          subletters.forEach(
+            (_, i) => (subletters[i] = 'zyxwvutsrqponmlkjihgfedcba'[i]),
+          )
+        "
+      >
+        atbash
+      </button>
     </div>
     <div>
       <label> <input type="checkbox" v-model="encoding" /> Reverse? </label>
     </div>
     <div v-if="ciphermode === 'polyalphabetic'">
-      probable period: {{ probablePeriod ?? 'unknown' }} <button @click="calculateProbablePeriod">recalculate</button>
+      probable period: {{ probablePeriod ?? 'unknown' }}
+      <button @click="calculateProbablePeriod">recalculate</button>
     </div>
     <div class="container vertical">
       ciphertext:<textarea v-model="ciphertext" :disabled="encoding"></textarea>
