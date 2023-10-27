@@ -18,7 +18,7 @@ import tetragramFreqs2 from '../resources/TETRAGRAMS2.json';
 function monoalphabeticSubstitutionHillClimb(text, threshold = 25_000) {
   let parentKey = 'abcdefghijklmnopqrstuvwxyz'.split('');
   let parentPlaintext = decipherMonoAlphabeticSubstitution(text, parentKey);
-  let parentFitness = tetragramFitness(parentPlaintext);
+  let parentFitness = tetragramFitness2(parentPlaintext);
   let counter = 0;
   while (counter < threshold) {
     const [r1, r2] = uniqueRandomPair(26);
@@ -33,7 +33,7 @@ function monoalphabeticSubstitutionHillClimb(text, threshold = 25_000) {
       }
     });
     let childPlaintext = decipherMonoAlphabeticSubstitution(text, childKey);
-    let childFitness = tetragramFitness(childPlaintext);
+    let childFitness = tetragramFitness2(childPlaintext);
     if (childFitness > parentFitness) {
       parentKey = childKey;
       parentPlaintext = childPlaintext;
