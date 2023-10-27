@@ -253,7 +253,7 @@
     </div>
     <div v-if="ciphermode === 'polyalphabetic'">
       probable period: {{ probablePeriod || 'unknown' }}
-      <button @click="calcProbablePeriod">recalculate</button>
+      <button @click="calcProbablePeriod">recalculate</button> <button v-if="probablePeriod > 0" @click="polyalphabeticPeriod = probablePeriod">use this period</button>
     </div>
     <div class="container vertical">
       ciphertext:<textarea v-model="ciphertext" :disabled="encoding"></textarea>
