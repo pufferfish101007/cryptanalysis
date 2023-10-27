@@ -204,7 +204,7 @@
   <div class="container">
     <div id="ciphermodeselect">
       mode:
-      <template v-for="[id, display] in modesEnum">
+      <template v-for="[id, display] in modesEnum" :key="id">
         <input
           type="radio"
           v-model="ciphermode"
