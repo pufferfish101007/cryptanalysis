@@ -38,7 +38,9 @@
   const hillClimbType = ref('');
   const noticeModal = ref();
   const noticeModalMsg = ref('');
-  const probablePeriod = ref(null);
+  const probablePeriod = ref(0);
+  const probablePeriodThreshold = ref(20);
+  const probablePeriodModal = ref();
   const letterFreqsColumns = computed(() =>
     reactive(
       [
@@ -193,6 +195,9 @@
       (_, i) => (subletters[i] = String.fromCharCode(((i + offset) % 26) + 97)),
     );
   };
+  const calcProbablePeriod = () => {
+    probablePeriodModal.value.show();
+  };
 </script>
 
 <template>
@@ -247,8 +252,8 @@
       <label> <input type="checkbox" v-model="encoding" /> Reverse? </label>
     </div>
     <div v-if="ciphermode === 'polyalphabetic'">
-      probable period: {{ probablePeriod ?? 'unknown' }}
-      <button @click="calculateProbablePeriod">recalculate</button>
+      probable period: {{ probablePeriod || 'unknown' }}
+      <button @click="calcProbablePeriod">recalculate</button>
     </div>
     <div class="container vertical">
       ciphertext:<textarea v-model="ciphertext" :disabled="encoding"></textarea>
@@ -319,7 +324,7 @@
     @close="thresholdModalCloseListener"
   >
     <label>
-      Hill climbing threshold
+      hill climbing threshold
       <input type="number" v-model="hillClimbThreshold" />
     </label>
   </Modal>
@@ -328,6 +333,12 @@
   >
   <Modal ref="noticeModal" closeonblur>
     {{ noticeModalMsg }}
+  </Modal>
+  <Modal ref="probablePeriodModal" :close-buttons="['ok']" @close="probablePeriod = calculateProbablePeriod(ciphertext, probablePeriodThreshold)">
+    <label>
+      probable period threshold:
+      <input type="number" v-model="probablePeriodThreshold" />
+    </label>
   </Modal>
 </template>
 

@@ -179,4 +179,36 @@ export function entropy(text) {
   return -sum;
 }
 
-export function calculateProbablePeriod() {}
+/**
+ *
+ * @param {string} text
+ * @param {number} [threshold=20]
+ * @returns {number}
+ */
+export function calculateProbablePeriod(text, threshold = 20) {
+  let strippedText = text.toLowerCase().replaceAll(/[^a-z]/g, '');
+  let period = 2;
+  let bestPeriod = 2;
+  let bestIoC = 0;
+  const expectedIoC = 1.75;
+  let counter = 0;
+  while (counter < threshold) {
+    const splitTexts = Array.from({ length: period }, (_, i) => {
+      let split = '';
+      for (let j = i; j < strippedText.length; j += period) {
+        split += strippedText[j];
+      }
+      return split;
+    });
+    const iocs = splitTexts.map((t) => normalizedIoC(t));
+    const avg = iocs.reduce((a, b) => a + b) / iocs.length || 0;
+    if (Math.abs(expectedIoC - avg) < Math.abs(expectedIoC - bestIoC)) {
+      bestIoC = avg;
+      bestPeriod = period;
+      counter = 0;
+    }
+    counter++;
+    period++;
+  }
+  return bestPeriod;
+}
