@@ -342,12 +342,16 @@
   </Modal>
   <Modal
     ref="probablePeriodModal"
-    :close-buttons="['ok']"
+    :close-buttons="['cancel', 'ok']"
     @close="
-      probablePeriod = calculateProbablePeriod(
-        ciphertext,
-        probablePeriodThreshold,
-      )
+      (v) => {
+        if (v === 'ok') {
+          probablePeriod = calculateProbablePeriod(
+            ciphertext,
+            probablePeriodThreshold,
+          );
+        }
+      }
     "
   >
     <label>
