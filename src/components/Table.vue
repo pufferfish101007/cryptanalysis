@@ -40,7 +40,11 @@
 <template>
   <table>
     <thead>
-      <th v-for="(column, index) in props.columns" @click="setSortBy(index)" :key="index">
+      <th
+        v-for="(column, index) in props.columns"
+        @click="setSortBy(index)"
+        :key="index"
+      >
         {{ column.name ?? column.key }}
         <span class="sortarrow">{{
           sortBy === index ? (sortAscending ? '↓' : '↑') : '&nbsp;'
