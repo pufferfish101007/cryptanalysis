@@ -28,7 +28,7 @@
   //let info = store.workspaces[props.tabId];
   //watch([props, info.subletters], () => {info = store.workspaces[props.tabId];console.log(props.tabId, info, info.subletters)},{immediate:true})
   const info = computed(() => store.workspaces[props.tabId]);
-  const hillClimberWorker = new HillClimbWorker();
+  //const hillClimberWorker = new HillClimbWorker();
   const modesEnum = [
     ['plaintext', 'plaintext'],
     ['monoalphabetic', 'monoalphabetic substitution'],
@@ -109,7 +109,9 @@
       case 'polyalphabetic':
         plaintext.value = encipherPeriodicSubstitution(
           c,
-          info.value.polySubLetters.map(inverseSubstitutionKey),
+          info.value.polySubLetters
+            .slice(0, info.value.polyalphabeticPeriod)
+            .map(inverseSubstitutionKey),
         );
         break;
       case 'plaintext':
@@ -131,7 +133,7 @@
       case 'polyalphabetic':
         info.value.ciphertext = encipherPeriodicSubstitution(
           p,
-          info.value.polySubLetters,
+          info.value.polySubLetters.slice(0, info.value.polyalphabeticPeriod),
         );
         break;
       case 'plaintext':
@@ -162,27 +164,6 @@
     info.value.subletters[primaryKey.toLowerCase().charCodeAt(0) - 97] =
       e.target.textContent;
   };
-  hillClimberWorker.addEventListener(
-    'message',
-    ({ data: { event, text, key, plaintext } }) => {
-      console.log('worker msg: %s (key?: %s)', event, key);
-      switch (event) {
-        case 'error':
-          console.error(text);
-          break;
-        case 'monoalphabetic-result':
-          /*info.subletters.forEach((_, i) => {
-            info.subletters[i] = key[i];
-          });*/
-          store.duplicateWorkspace(props.tabId, {
-            name: 'hill-climb result',
-            subletters: key,
-          });
-          store.focusWorkspace(store.tabs.at(-1));
-      }
-      processingModal.value.close();
-    },
-  );
   const hillClimb = (type) => {
     hillClimbType.value = type;
     thresholdModal.value.show();
@@ -195,11 +176,73 @@
     }
   };
   const sendHillClimb = (type) => {
-    hillClimberWorker.postMessage({
-      event: type,
-      text: info.value.ciphertext,
-      threshold: info.value.hillClimbThreshold,
-    });
+    let waiting = info.value.hillClimbThreads;
+    const results = [];
+    for (let i = 0; i < info.value.hillClimbThreads; i++) {
+      let hillClimbWorker = new HillClimbWorker();
+      hillClimbWorker.addEventListener(
+        'message',
+        ({ data: { event, text, key, fitness, plaintext } }) => {
+          console.log('worker msg: %s (key?: %s)', event, key);
+          switch (event) {
+            case 'error':
+              console.error(text);
+              break;
+            case 'monoalphabetic-result':
+            case 'vigenere-result':
+              /*info.subletters.forEach((_, i) => {
+              info.subletters[i] = key[i];
+            });*/
+              results.push({
+                key,
+                fitness,
+              });
+            /*store.duplicateWorkspace(props.tabId, {
+              name: 'hill-climb result',
+              subletters: key,
+            });
+            store.focusWorkspace(store.tabs.at(-1));*/
+          }
+          waiting--;
+          if (waiting === 0) {
+            results.sort((a, b) => a.fitness - b.fitness);
+            console.log(results, results[0])
+            for (let j = 0; j < info.value.hillClimbResultsNum; j++) {
+              if (!results.length) break;
+              store.duplicateWorkspace(props.tabId, {
+                name: `hill-climb result ${j + 1}`,
+                ...{
+                  monoalphabetic: { subletters: results.pop().key },
+                  polyalphabetic: info.value.assumeVigenere
+                    ? {
+                        polySubLetters: results
+                          .pop()
+                          .key.map((offset) =>
+                            Array.from({ length: 26 }, (_, k) =>
+                              String.fromCharCode(((k + offset) % 26) + 97),
+                            ),
+                          ),
+                      }
+                    : {},
+                }[hillClimbType.value],
+              });
+              if (j === 0) {
+                store.focusWorkspace(store.tabs.at(-1));
+              }
+            }
+            processingModal.value.close();
+          }
+          hillClimbWorker.terminate();
+        },
+      );
+      hillClimbWorker.postMessage({
+        event: type,
+        text: info.value.ciphertext,
+        threshold: info.value.hillClimbThreshold,
+        period: info.value.polyalphabeticPeriod,
+        assumeVigenere: info.value.assumeVigenere,
+      });
+    }
     processingModal.value.show();
   };
   const quickVigenere = (e) => {
@@ -336,6 +379,13 @@
         <!-- prettier-ignore -->
         carry out stochastic hill climbing attack for monoalphabetic substitution cipher
       </button>
+      <button
+        v-else-if="info.ciphermode === 'polyalphabetic' && !info.encoding"
+        @click="hillClimb('polyalphabetic')"
+      >
+        <!-- prettier-ignore -->
+        carry out stochastic hill climbing attack for periodic polyalphabetic substitution cipher
+      </button>
     </div>
     <details open>
       <summary>letter frequencies</summary>
@@ -364,8 +414,21 @@
     @close="thresholdModalCloseListener"
   >
     <label>
-      hill climbing threshold
+      hill climbing threshold:
       <input type="number" v-model="info.hillClimbThreshold" />
+    </label>
+    <br />
+    <label>
+      number of concurrent threads:
+      <input type="number" min="1" v-model="info.hillClimbThreads" />
+    </label>
+    <br />
+    <label>
+      show top
+      <input type="number" v-model="info.hillClimbResultsNum" min="1" /> results
+    </label>
+    <label v-if="info.ciphermode === 'polyalphabetic'">
+      assume vigenère? <input type="checkbox" v-model="info.assumeVigenere" />
     </label>
   </Modal>
   <Modal ref="processingModal" :closeonblur="false" :close-buttons="[]"

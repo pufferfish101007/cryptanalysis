@@ -32,10 +32,13 @@ export const useStore = defineStore('store', () => {
         ),
       ),
       polyalphabeticPeriod: args.polyalphabeticPeriod ?? 5,
-      hillClimbThreshold: args.hillClimbThreshold ?? 10_000,
+      hillClimbThreshold: args.hillClimbThreshold ?? 2_000,
+      hillClimbThreads: args.hillClimbThreads ?? window.navigator.hardwareConcurrency,
+      hillClimbResultsNum: args.hillClimbResultsNum ?? 1,
       probablePeriod: args.probablePeriod ?? 0,
       probablePeriodThreshold: args.probablePeriodThreshold ?? 20,
       name: args.name ?? `workspace ${totalTabs}`,
+      assumeVigenere: args.assumeVigenere ?? false,
     });
     console.log(workspaces[id].subletters);
   }
@@ -45,11 +48,12 @@ export const useStore = defineStore('store', () => {
       Object.assign(structuredClone(deepToRaw(workspaces[id])), additionalArgs),
     );
   }
-  function deleteWorkspace(id = null) {
-    id ??= focusedWorkspace.value;
+  function deleteWorkspace(id) {
     const index = tabs.indexOf(id);
+    focusWorkspace(tabs.at(index === tabs.length - 1 ? 0 : -1));
     tabs.splice(index, 1);
-    focusWorkspace(tabs.at(-1));
+    console.log(tabs)
+    //focusWorkspace(tabs.at(-1));
     delete workspaces[id];
   }
   addWorkspace();

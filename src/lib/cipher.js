@@ -43,9 +43,30 @@ export function encipherPeriodicSubstitution(text, key) {
     // @ts-ignore
     key[i] = key[i].toLowerCase();
   });
-  for (let i = 0; i < period; i++) {
-    for (let j = i; j < plaintext.length; j += period) {
-      plaintext[j] = key[i][plaintext[j].charCodeAt(0) - 65] ?? plaintext[j];
+  let counter = -1;
+  for (let i = 0; i < plaintext.length; i++) {
+    if (/[A-Z]/.test(plaintext[i])) {
+      counter++;
+      plaintext[i] = key[counter % period][plaintext[i].charCodeAt(0) - 65];
+    }
+  }
+  return plaintext.join('');
+}
+
+/**
+ *
+ * @param {string} text
+ * @param {Array<number>} key
+ * @returns {string}
+ */
+export function encipherVigenere(text, key) {
+  let plaintext = text.toUpperCase().split('');
+  const period = key.length;
+  let counter = -1;
+  for (let i = 0; i < plaintext.length; i++) {
+    if (/[A-Z]/.test(plaintext[i])) {
+      counter++;
+      plaintext[i] = String.fromCharCode((plaintext[i].charCodeAt(0) - 39 + key[i % period]) % 26 + 97);
     }
   }
   return plaintext.join('');

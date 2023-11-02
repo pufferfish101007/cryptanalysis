@@ -1,11 +1,12 @@
 import { tetragramFitness, tetragramFitness2 } from './fitness.js';
-import { decipherMonoAlphabeticSubstitution } from './cipher.js';
+import { decipherMonoAlphabeticSubstitution, encipherVigenere } from './cipher.js';
 import tetragramFreqs2 from '../resources/TETRAGRAMS2.json';
 
 /**
  * @typedef {Object} HillClimbResult
  * @property {Array<string>} key
  * @property {string} plaintext
+ * @property {number} fitness
  */
 
 /**
@@ -47,6 +48,7 @@ function monoalphabeticSubstitutionHillClimb(text, threshold = 25_000) {
   return {
     key: parentKey,
     plaintext: parentPlaintext,
+    fitness: parentFitness,
   };
 }
 
@@ -85,7 +87,7 @@ function swapFreqsMatrix(mat, r1, r2, dimension = 4) {
  * @returns {HillClimbResult}
  *
  */
-function monoalphabeticSubstitutionHillClimb2(text, threshold = 25_000) {
+function monoalphabeticSubstitutionHillClimb2(text, threshold = 2_000) {
   let freqs = structuredClone(tetragramFreqs2);
   let parentKey = 'abcdefghijklmnopqrstuvwxyz'.split('');
   let parentPlaintext = decipherMonoAlphabeticSubstitution(text, parentKey);
@@ -121,6 +123,7 @@ function monoalphabeticSubstitutionHillClimb2(text, threshold = 25_000) {
   return {
     key: parentKey,
     plaintext: parentPlaintext,
+    fitness: parentFitness,
   };
 }
 
@@ -138,7 +141,37 @@ function uniqueRandomPair(n) {
   return [r1, r2];
 }
 
-self.addEventListener('message', ({ data: { event, text, threshold } }) => {
+function hillClimbVigenere(text, period) {
+  let flag = false;
+  let key = Array.from({ length: period }, _ => 0);
+  let currentFitness = tetragramFitness2(text);
+  while (!flag) {
+    let oldFitness = currentFitness;
+    for (let i = 0 ; i< period; i++) {
+      let maxFitness = currentFitness;
+      let bestLetter = -1;
+      for (let j = 0; j > -26; j--) {
+        let newKey = Object.assign([...key], { [i]: j });
+        let newFitness = tetragramFitness2(encipherVigenere(text, newKey));
+        if (newFitness > currentFitness) {
+          bestLetter = -j;
+          maxFitness = newFitness;
+        }
+      }
+      Object.assign(key, { [i]: bestLetter });
+      currentFitness = maxFitness;
+    }
+    if (currentFitness = oldFitness) flag = true;
+  }
+  return {
+    key,
+    plaintext: encipherVigenere(text, key),
+    fitness: currentFitness,
+  }
+}
+
+self.addEventListener('message', ({ data: { event, text, threshold, period, assumeVigenere } }) => {
+  console.log(event,text,threshold,period,assumeVigenere)
   switch (event) {
     case 'monoalphabetic':
       self.postMessage({
@@ -146,6 +179,11 @@ self.addEventListener('message', ({ data: { event, text, threshold } }) => {
         ...monoalphabeticSubstitutionHillClimb(text, threshold),
       });
       break;
+    case 'polyalphabetic':
+      self.postMessage({
+        event: 'vigenere-result',
+        ...(assumeVigenere ? hillClimbVigenere(text, period) : {}),
+      })
     default:
       self.postMessage({ event: 'error', text: 'invalid event' });
   }
