@@ -11,6 +11,19 @@ export function inverseSubstitutionKey(key) {
 }
 
 /**
+ * calculate an inverse permutation. permutations should start at 0.
+ * @param {Array<number>} key 
+ * @returns {Array<number>}
+ */
+export function inversePermutation(key) {
+  let inverse = Array.from({ length: key.length });
+  for (let i = 0; i < key.length; i++) {
+    inverse[key[i]] = i;
+  }
+  return inverse;
+}
+
+/**
  *
  * @param {string} text
  * @param {string|Array<string>} key
@@ -70,4 +83,27 @@ export function encipherVigenere(text, key) {
     }
   }
   return plaintext.join('');
+}
+
+export function encipherBlockTransposition(text, key) {
+  let plaintext = text.toUpperCase().split('');
+  let newtext = '';
+  const period = key.length;
+  let pos = 0;
+  $outer: while (true) {
+    let block = [];
+    while (block.length < period) {
+      if (!plaintext[pos]) break $outer;
+      if (/[A-Z]/.test(plaintext[pos])) {
+        block.push(plaintext[pos]);
+      }
+      pos++;
+    }
+    let newBlock = Array.from({ length: period });
+    for (let i = 0; i < period; i++) {
+      newBlock[key[i]] = block[i];
+    }
+    newtext += newBlock.join('') + ' ';
+  }
+  return newtext;
 }

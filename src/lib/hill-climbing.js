@@ -183,7 +183,8 @@ self.addEventListener('message', ({ data: { event, text, threshold, period, assu
       self.postMessage({
         event: 'vigenere-result',
         ...(assumeVigenere ? hillClimbVigenere(text, period) : {}),
-      })
+      });
+      break;
     default:
       self.postMessage({ event: 'error', text: 'invalid event' });
   }

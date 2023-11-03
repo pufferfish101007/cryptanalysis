@@ -12,8 +12,10 @@
   import Modal from './Modal.vue';
   import {
     decipherMonoAlphabeticSubstitution,
+    encipherBlockTransposition,
     encipherPeriodicSubstitution,
     inverseSubstitutionKey,
+    inversePermutation,
   } from '../lib/cipher.js';
   import HillClimbWorker from '../lib/hill-climbing.js?worker';
   import { computed, reactive, ref, watch, watchEffect } from 'vue';
@@ -33,6 +35,7 @@
     ['plaintext', 'plaintext'],
     ['monoalphabetic', 'monoalphabetic substitution'],
     ['polyalphabetic', 'periodic polyalphabetic substitution'],
+    ['permutation', 'block transposition/permutation'],
   ];
   const plaintext = ref('');
   const processingModal = ref();
@@ -41,6 +44,14 @@
   const noticeModal = ref();
   const noticeModalMsg = ref('');
   const probablePeriodModal = ref();
+  let permutationText = computed({
+    get: () => info.value.permutation.join(''),
+    set: (newVal) => {
+        let arr = newVal.split('').map(Number).map((n) => Number.isNaN(n) ? 0 : n);
+        if (!arr.length) arr.push(0);
+        info.value.permutation = reactive(arr);
+    },
+  });
   const letterFreqsColumns = computed(() =>
     reactive(
       [
@@ -114,6 +125,9 @@
             .map(inverseSubstitutionKey),
         );
         break;
+      case 'permutation':
+        plaintext.value = encipherBlockTransposition(c, inversePermutation(info.value.permutation));
+        break;
       case 'plaintext':
       default:
         plaintext.value = c.toLowerCase();
@@ -135,6 +149,9 @@
           p,
           info.value.polySubLetters.slice(0, info.value.polyalphabeticPeriod),
         );
+        break;
+        case 'permutation':
+        info.value.ciphertext = encipherBlockTransposition(p, info.value.permutation);
         break;
       case 'plaintext':
       default:
@@ -343,6 +360,9 @@
         v-model="plaintext"
         :disabled="!info.encoding"
       ></textarea>
+    </div>
+    <div v-if="info.ciphermode === 'permutation'">
+      <input type="text" v-model="permutationText" />
     </div>
     <div>
       <div>
