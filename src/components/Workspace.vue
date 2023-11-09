@@ -47,9 +47,12 @@
   let permutationText = computed({
     get: () => info.value.permutation.join(''),
     set: (newVal) => {
-        let arr = newVal.split('').map(Number).map((n) => Number.isNaN(n) ? 0 : n);
-        if (!arr.length) arr.push(0);
-        info.value.permutation = reactive(arr);
+      let arr = newVal
+        .split('')
+        .map(Number)
+        .map((n) => (Number.isNaN(n) ? 0 : n));
+      if (!arr.length) arr.push(0);
+      info.value.permutation = reactive(arr);
     },
   });
   const letterFreqsColumns = computed(() =>
@@ -126,7 +129,10 @@
         );
         break;
       case 'permutation':
-        plaintext.value = encipherBlockTransposition(c, inversePermutation(info.value.permutation));
+        plaintext.value = encipherBlockTransposition(
+          c,
+          inversePermutation(info.value.permutation),
+        );
         break;
       case 'plaintext':
       default:
@@ -150,8 +156,11 @@
           info.value.polySubLetters.slice(0, info.value.polyalphabeticPeriod),
         );
         break;
-        case 'permutation':
-        info.value.ciphertext = encipherBlockTransposition(p, info.value.permutation);
+      case 'permutation':
+        info.value.ciphertext = encipherBlockTransposition(
+          p,
+          info.value.permutation,
+        );
         break;
       case 'plaintext':
       default:
@@ -223,9 +232,10 @@
           waiting--;
           if (waiting === 0) {
             results.sort((a, b) => a.fitness - b.fitness);
-            console.log(results, results[0])
+            console.log(results.length, structuredClone(results), results[0]);
             for (let j = 0; j < info.value.hillClimbResultsNum; j++) {
               if (!results.length) break;
+              console.log(structuredClone(results));
               store.duplicateWorkspace(props.tabId, {
                 name: `hill-climb result ${j + 1}`,
                 ...{
@@ -243,6 +253,7 @@
                     : {},
                 }[hillClimbType.value],
               });
+              console.log('a');
               if (j === 0) {
                 store.focusWorkspace(store.tabs.at(-1));
               }
@@ -283,6 +294,34 @@
   };
   const calcProbablePeriod = () => {
     probablePeriodModal.value.show();
+  };
+  const bruteForceVigenere = () => {
+    processingModal.value.show();
+    const worker = new HillClimbWorker();
+    worker.addEventListener(
+      'message',
+      ({ data: { event, text, key, fitness, plaintext } }) => {
+        if (event === 'vigenere-bruteforce-result') {
+          store.duplicateWorkspace(props.tabId, {
+            name: 'vigenère brute-force result',
+            polySubLetters: key.map((offset) =>
+              Array.from({ length: 26 }, (_, i) =>
+                String.fromCharCode(((i + offset) % 26) + 97),
+              ),
+            ),
+          });
+        } else {
+          console.error(`invalid worker event: ${event}`);
+        }
+        processingModal.value.close();
+        worker.terminate();
+      },
+    );
+    worker.postMessage({
+      event: 'vigenere-bruteforce',
+      text: info.value.ciphertext,
+      period: info.value.polyalphabeticPeriod,
+    });
   };
 </script>
 
@@ -399,13 +438,19 @@
         <!-- prettier-ignore -->
         carry out stochastic hill climbing attack for monoalphabetic substitution cipher
       </button>
-      <button
+      <template
         v-else-if="info.ciphermode === 'polyalphabetic' && !info.encoding"
-        @click="hillClimb('polyalphabetic')"
       >
-        <!-- prettier-ignore -->
-        carry out stochastic hill climbing attack for periodic polyalphabetic substitution cipher
-      </button>
+        <button>
+          @click="hillClimb('polyalphabetic')" >
+          <!-- prettier-ignore -->
+          carry out stochastic hill climbing attack for periodic polyalphabetic substitution cipher
+        </button>
+        <br />
+        <button @click="bruteForceVigenere">
+          carry out brute force attack on vigenere cipher
+        </button>
+      </template>
     </div>
     <details open>
       <summary>letter frequencies</summary>
@@ -433,25 +478,29 @@
     :close-buttons="['cancel', 'ok']"
     @close="thresholdModalCloseListener"
   >
-    <label>
-      hill climbing threshold:
-      <input type="number" v-model="info.hillClimbThreshold" />
-    </label>
-    <br />
-    <label>
-      number of concurrent threads:
-      <input type="number" min="1" v-model="info.hillClimbThreads" />
-    </label>
-    <br />
-    <label>
-      show top
-      <input type="number" v-model="info.hillClimbResultsNum" min="1" /> results
-    </label>
+    <template v-if="['monoalphabetic'.includes(info.ciphermode)]">
+      <label>
+        hill climbing threshold:
+        <input type="number" v-model="info.hillClimbThreshold" />
+      </label>
+      <br />
+      <label>
+        number of concurrent threads:
+        <input type="number" min="1" v-model="info.hillClimbThreads" />
+      </label>
+      <br />
+      <label>
+        show top
+        <input type="number" v-model="info.hillClimbResultsNum" min="1" />
+        results
+      </label>
+      <br />
+    </template>
     <label v-if="info.ciphermode === 'polyalphabetic'">
       assume vigenère? <input type="checkbox" v-model="info.assumeVigenere" />
     </label>
   </Modal>
-  <Modal ref="processingModal" :closeonblur="false" :close-buttons="[]"
+  <Modal ref="processingModal" :closeonblur="true" :close-buttons="[]"
     ><span id="processing-span">processing</span></Modal
   >
   <Modal ref="noticeModal" closeonblur>

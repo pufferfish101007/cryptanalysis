@@ -39,7 +39,7 @@ export const useStore = defineStore('store', () => {
       probablePeriodThreshold: args.probablePeriodThreshold ?? 20,
       name: args.name ?? `workspace ${totalTabs}`,
       assumeVigenere: args.assumeVigenere ?? false,
-      permutation: ref(structuredClone(deepToRaw(args.permutation ?? [0,1,2,3,4]))),
+      permutation: reactive(structuredClone(toRaw(args.permutation ?? [0,1,2,3,4]))),
     });
     console.log(workspaces[id].subletters);
   }
