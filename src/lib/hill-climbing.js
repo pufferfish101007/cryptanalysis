@@ -211,7 +211,14 @@ export function vigenereBruteForce(text, period) {
  * @returns {HillClimbResult}
  */
 export function polyalphabeticHillCLimb(text, period) {
-
+  let bigCounter = 0;
+  let bestFitness = tetragramFitness2(text);
+  let parentKey = Array.from({ length: period }, () => Array.from({ length: 26 }, (i) => String.fromCharCode(i + 97)));
+  while (bigCounter < 20000) {
+    for (let i = 0; i < period; i++) {
+      
+    }
+  }
 }
 
 self.addEventListener(
@@ -227,8 +234,8 @@ self.addEventListener(
         break;
       case 'polyalphabetic':
         self.postMessage({
-          event: 'vigenere-result',
-          ...(assumeVigenere ? hillClimbVigenere(text, period) : {}),
+          event: 'polyalphabetic-result',
+          ...(assumeVigenere ? hillClimbVigenere(text, period) : polyalphabeticHillCLimb(text, period)),
         });
         break;
       case 'vigenere-bruteforce':

@@ -215,7 +215,7 @@
               console.error(text);
               break;
             case 'monoalphabetic-result':
-            case 'vigenere-result':
+            case 'polyalphabetic-result':
               /*info.subletters.forEach((_, i) => {
               info.subletters[i] = key[i];
             });*/
@@ -441,14 +441,14 @@
       <template
         v-else-if="info.ciphermode === 'polyalphabetic' && !info.encoding"
       >
-        <button>
+        <button
           @click="hillClimb('polyalphabetic')" >
           <!-- prettier-ignore -->
-          carry out stochastic hill climbing attack for periodic polyalphabetic substitution cipher
+          carry out stochastic hill climbing attack for periodic polyalphabetic substitution cipher (broken)
         </button>
         <br />
         <button @click="bruteForceVigenere">
-          carry out brute force attack on vigenere cipher
+          carry out brute force attack on vigenere cipher (also broken)
         </button>
       </template>
     </div>
