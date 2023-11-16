@@ -93,7 +93,10 @@ export function encipherBlockTransposition(text, key) {
   $outer: while (true) {
     let block = [];
     while (block.length < period) {
-      if (!plaintext[pos]) break $outer;
+      if (!plaintext[pos]) {
+        newtext += block.join('');
+        break $outer;
+      }
       if (/[A-Z]/.test(plaintext[pos])) {
         block.push(plaintext[pos]);
       }
