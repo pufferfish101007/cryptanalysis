@@ -40,6 +40,8 @@ export const useStore = defineStore('store', () => {
       name: args.name ?? `workspace ${totalTabs}`,
       assumeVigenere: args.assumeVigenere ?? false,
       permutation: reactive(structuredClone(toRaw(args.permutation ?? [0,1,2,3,4]))),
+      vigenereInitialGuess: args.vigenereInitialGuess ?? Array.from({ length: args.polyalphabeticPeriod ?? 5 }, _ => 'a').join(''),
+      useMorsePunct: args.useMorsePunct ?? false,
     });
     console.log(workspaces[id].subletters);
   }

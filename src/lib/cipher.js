@@ -12,7 +12,7 @@ export function inverseSubstitutionKey(key) {
 
 /**
  * calculate an inverse permutation. permutations should start at 0.
- * @param {Array<number>} key 
+ * @param {Array<number>} key
  * @returns {Array<number>}
  */
 export function inversePermutation(key) {
@@ -79,7 +79,9 @@ export function encipherVigenere(text, key) {
   for (let i = 0; i < plaintext.length; i++) {
     if (/[A-Z]/.test(plaintext[i])) {
       counter++;
-      plaintext[i] = String.fromCharCode((plaintext[i].charCodeAt(0) - 39 + key[i % period]) % 26 + 97);
+      plaintext[i] = String.fromCharCode(
+        ((plaintext[i].charCodeAt(0) - 39 + key[i % period]) % 26) + 97,
+      );
     }
   }
   return plaintext.join('');
@@ -109,4 +111,101 @@ export function encipherBlockTransposition(text, key) {
     newtext += newBlock.join('') + ' ';
   }
   return newtext;
+}
+
+const morse = {
+  A: '.-',
+  B: '-...',
+  C: '-.-.',
+  D: '-..',
+  E: '.',
+  F: '..-.',
+  G: '--.',
+  H: '....',
+  I: '..',
+  J: '.---',
+  K: '-.-',
+  L: '.-..',
+  M: '--',
+  N: '-.',
+  O: '---',
+  P: '.--.',
+  Q: '--.-',
+  R: '.-.',
+  S: '...',
+  T: '-',
+  U: '..-',
+  V: '...-',
+  W: '.--',
+  X: '-..-',
+  Y: '-.--',
+  Z: '--..',
+  1: '.----',
+  2: '..---',
+  3: '...--',
+  4: '....-',
+  5: '.....',
+  6: '-....',
+  7: '--...',
+  8: '---..',
+  9: '----.',
+  0: '-----',
+  ' ': '/'
+};
+
+const reverseMorse = Object.fromEntries(Object.entries(morse).map(([a, b]) => [b, a]));
+
+const morsePunctMap = {
+  ',': '--..--',
+  '.': '.-.-.-',
+  '?': '..--..',
+  ';': '-.-.-',
+  ':': '---...',
+  '/': '-..-.',
+  '-': '-....-',
+  "'": '.----.',
+  '(': '-.--.',
+  ')': '-.--.-',
+  '&': '.-...',
+  _: '..--.-',
+  '@': '.--.-.',
+};
+
+const reverseMorsePunctMap = Object.fromEntries(Object.entries(morsePunctMap).map(([a, b]) => [b, a]));
+
+console.log(reverseMorse, reverseMorsePunctMap)
+
+export function decipherMorse(text, punct=false) {
+  console.log('dm')
+  let plaintext = '';
+  let i = -1;
+  $outer: while (true) {
+    let chunk = '';
+    while (true) {
+      i++;
+      if (!text[i]) break $outer;
+      if (text[i] === '/') plaintext += ' ';
+      if (!/\.|-/.test(text[i])) {
+        break;
+      } else {
+        chunk += text[i];
+      }
+      console.log(chunk)
+    }
+    plaintext += reverseMorse[chunk] ?? ((punct ? reverseMorsePunctMap[chunk] : null) ?? chunk);
+  }
+  return plaintext;
+}
+
+export function encipherMorse(text, punct=false) {
+  console.log('em');
+  let plaintext = '';
+  for (const i in text) {
+    let t = text[i].toUpperCase();
+    console.log(morse[t])
+    console.log(morsePunctMap[t])
+    console.log(t);
+    plaintext += (morse[t] ?? (punct ? (morsePunctMap[t] ?? t) : t)) + ' ';
+  }
+  return plaintext;
 }

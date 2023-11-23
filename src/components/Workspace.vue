@@ -16,6 +16,8 @@
     encipherPeriodicSubstitution,
     inverseSubstitutionKey,
     inversePermutation,
+    encipherMorse,
+    decipherMorse,
   } from '../lib/cipher.js';
   import HillClimbWorker from '../lib/hill-climbing.js?worker';
   import { computed, reactive, ref, watch, watchEffect } from 'vue';
@@ -36,6 +38,7 @@
     ['monoalphabetic', 'monoalphabetic substitution'],
     ['polyalphabetic', 'periodic polyalphabetic substitution'],
     ['permutation', 'block transposition/permutation'],
+    ['morse', 'morse code'],
   ];
   const plaintext = ref('');
   const processingModal = ref();
@@ -134,6 +137,9 @@
           inversePermutation(info.value.permutation),
         );
         break;
+      case 'morse':
+        plaintext.value = decipherMorse(c, info.value.useMorsePunct);
+        break;
       case 'plaintext':
       default:
         plaintext.value = c.toLowerCase();
@@ -161,6 +167,9 @@
           p,
           info.value.permutation,
         );
+        break;
+      case 'morse':
+        info.value.ciphertext = encipherMorse(p, info.value.useMorsePunct);
         break;
       case 'plaintext':
       default:
@@ -269,6 +278,7 @@
         threshold: info.value.hillClimbThreshold,
         period: info.value.polyalphabeticPeriod,
         assumeVigenere: info.value.assumeVigenere,
+        initialGuess: info.value.assumeVigenere ? info.value.vigenereInitialGuess.toLowerCase().split('').map(c => c.charCodeAt(0) - 97) : null,
       });
     }
     processingModal.value.show();
@@ -300,7 +310,7 @@
     const worker = new HillClimbWorker();
     worker.addEventListener(
       'message',
-      ({ data: { event, text, key, fitness, plaintext } }) => {
+      ({ data: { event, text, key, fitness, plaintext, chunks } }) => {
         if (event === 'vigenere-bruteforce-result') {
           store.duplicateWorkspace(props.tabId, {
             name: 'vigenère brute-force result',
@@ -310,6 +320,7 @@
               ),
             ),
           });
+          store.focusWorkspace(store.tabs.flat(-1));
         } else {
           console.error(`invalid worker event: ${event}`);
         }
@@ -448,7 +459,7 @@
         </button>
         <br />
         <button @click="bruteForceVigenere">
-          carry out brute force attack on vigenere cipher (also broken)
+          carry out letter frequency attack on vigenère cipher
         </button>
       </template>
     </div>
@@ -478,7 +489,7 @@
     :close-buttons="['cancel', 'ok']"
     @close="thresholdModalCloseListener"
   >
-    <template v-if="['monoalphabetic'.includes(info.ciphermode)]">
+    <template v-if="['monoalphabetic', 'polyyalphabetic'].includes(info.ciphermode)">
       <label>
         hill climbing threshold:
         <input type="number" v-model="info.hillClimbThreshold" />
@@ -496,9 +507,15 @@
       </label>
       <br />
     </template>
-    <label v-if="info.ciphermode === 'polyalphabetic'">
-      assume vigenère? <input type="checkbox" v-model="info.assumeVigenere" />
-    </label>
+    <template v-if="info.ciphermode === 'polyalphabetic'">
+      <label>
+        assume vigenère? <input type="checkbox" v-model="info.assumeVigenere" />
+      </label>
+      <br />
+      <label v-if="info.assumeVigenere">
+        initial guess <input type="text" v-model="info.vigenereInitialGuess" :minlength="info.polyalphabeticPeriod" :maxlength="info.polyalphabeticPeriod" />
+      </label>
+    </template>
   </Modal>
   <Modal ref="processingModal" :closeonblur="true" :close-buttons="[]"
     ><span id="processing-span">processing</span></Modal

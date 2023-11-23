@@ -1,4 +1,4 @@
-import { tetragramFitness, tetragramFitness2 } from './fitness.js';
+import { tetragramFitness, tetragramFitness2, normalizedIoC } from './fitness.js';
 import {
   decipherMonoAlphabeticSubstitution,
   encipherVigenere,
@@ -143,10 +143,10 @@ function uniqueRandomPair(n) {
   }
   return [r1, r2];
 }
-
-function hillClimbVigenere(text, period) {
+/*
+function hillClimbVigenere(text, period, initialGuess) {
   let flag = false;
-  let key = Array.from({ length: period }, (_) => 0);
+  let key = initialGuess ?? Array.from({ length: period }, () => 0);
   let currentFitness = tetragramFitness2(text);
   while (!flag) {
     let oldFitness = currentFitness;
@@ -174,6 +174,37 @@ function hillClimbVigenere(text, period) {
     plaintext: encipherVigenere(text, key),
     fitness: currentFitness,
   };
+}*/
+function hillClimbVigenere(text, period, initialGuess) {
+  let flag = false;
+  let key = initialGuess ?? Array.from({ length: period }, () => 0);
+  let currentFitness = normalizedIoC(encipherVigenere(text, key), 2);
+  while (!flag) {
+    let oldFitness = currentFitness;
+    for (let i = 0; i < period; i++) {
+      let maxFitness = currentFitness;
+      let bestLetter = key[i];
+      for (let j = 0; j < 26; j++) {
+        let newKey = Object.assign([...key], { [i]: j });
+        let newFitness = normalizedIoC(encipherVigenere(text, newKey), 2);
+        if (newFitness > maxFitness) {
+          bestLetter = j;
+          maxFitness = newFitness;
+          console.log(key, maxFitness);
+        }
+      }
+      Object.assign(key, { [i]: bestLetter });
+      currentFitness = maxFitness;
+    }
+    if (currentFitness === oldFitness) {
+      flag = true;
+    }
+  }
+  return {
+    key,
+    plaintext: encipherVigenere(text, key),
+    fitness: currentFitness,
+  };
 }
 
 /**
@@ -182,6 +213,7 @@ function hillClimbVigenere(text, period) {
  * @param {number} period
  * @returns HillClimbResult
  */
+/*
 export function vigenereBruteForce(text, period) {
   let bestFitness = tetragramFitness2(text);
   let bestKey = Array.from({ length: period }, () => 0);
@@ -202,6 +234,24 @@ export function vigenereBruteForce(text, period) {
     fitness: bestFitness,
     plaintext: encipherVigenere(text, bestKey),
   };
+}*/
+
+export function vigenereBruteForce(text, period) {
+  let normalisedText = text.toLowerCase().replaceAll(/[^a-z]/g, '');
+  let chunks = Array.from({ length: period }, _ => []);
+  for (let i = 0; i < normalisedText.length; i++) {
+    chunks[i % period].push(normalisedText[i]);
+  }
+  let freqs = Array.from({ length: period }, _ => Array.from({ length: 26 }, _ => 0));
+  for (const j in chunks) {
+    for (const letter of chunks[j]) {
+      freqs[j][letter.charCodeAt(0) - 97]++;
+    }
+  }
+  const key = freqs.map(freqMap => (freqMap.indexOf(Math.max(...freqMap)) - 4) % 26);
+  return {
+    key,
+  }
 }
 
 /**
@@ -223,7 +273,7 @@ export function polyalphabeticHillCLimb(text, period) {
 
 self.addEventListener(
   'message',
-  ({ data: { event, text, threshold, period, assumeVigenere } }) => {
+  ({ data: { event, text, threshold, period, assumeVigenere, initialGuess } }) => {
     console.log(event, text, threshold, period, assumeVigenere);
     switch (event) {
       case 'monoalphabetic':
@@ -235,7 +285,7 @@ self.addEventListener(
       case 'polyalphabetic':
         self.postMessage({
           event: 'polyalphabetic-result',
-          ...(assumeVigenere ? hillClimbVigenere(text, period) : polyalphabeticHillCLimb(text, period)),
+          ...(assumeVigenere ? hillClimbVigenere(text, period, initialGuess) : polyalphabeticHillCLimb(text, period)),
         });
         break;
       case 'vigenere-bruteforce':
