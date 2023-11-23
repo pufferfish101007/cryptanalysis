@@ -48,11 +48,11 @@
   const noticeModalMsg = ref('');
   const probablePeriodModal = ref();
   let permutationText = computed({
-    get: () => info.value.permutation.join(''),
+    get: () => info.value.permutation.map(x => x.toString(16)).join(''),
     set: (newVal) => {
       let arr = newVal
         .split('')
-        .map(Number)
+        .map(x => parseInt(x, 16))
         .map((n) => (Number.isNaN(n) ? 0 : n));
       if (!arr.length) arr.push(0);
       info.value.permutation = reactive(arr);
