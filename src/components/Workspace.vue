@@ -18,6 +18,8 @@
     inversePermutation,
     encipherMorse,
     decipherMorse,
+    encipherColumnarTransposition,
+    decipherColumnarTransposition,
   } from '../lib/cipher.js';
   import HillClimbWorker from '../lib/hill-climbing.js?worker';
   import { computed, reactive, ref, watch, watchEffect } from 'vue';
@@ -39,6 +41,7 @@
     ['polyalphabetic', 'periodic polyalphabetic substitution'],
     ['permutation', 'block transposition/permutation'],
     ['morse', 'morse code'],
+    ['column', 'columnar transposition'],
   ];
   const plaintext = ref('');
   const processingModal = ref();
@@ -48,11 +51,11 @@
   const noticeModalMsg = ref('');
   const probablePeriodModal = ref();
   let permutationText = computed({
-    get: () => info.value.permutation.map(x => x.toString(16)).join(''),
+    get: () => info.value.permutation.map(x => x.toString(36)).join(''),
     set: (newVal) => {
       let arr = newVal
         .split('')
-        .map(x => parseInt(x, 16))
+        .map(x => parseInt(x, 36))
         .map((n) => (Number.isNaN(n) ? 0 : n));
       if (!arr.length) arr.push(0);
       info.value.permutation = reactive(arr);
@@ -140,6 +143,10 @@
       case 'morse':
         plaintext.value = decipherMorse(c, info.value.useMorsePunct);
         break;
+      case 'column':
+        console.log(c, c.prototype);
+        plaintext.value = decipherColumnarTransposition(c, info.value.permutation);
+        break;
       case 'plaintext':
       default:
         plaintext.value = c.toLowerCase();
@@ -171,6 +178,8 @@
       case 'morse':
         info.value.ciphertext = encipherMorse(p, info.value.useMorsePunct);
         break;
+      case 'column':
+        info.value.ciphertext = encipherColumnarTransposition(p, info.value.permutation);
       case 'plaintext':
       default:
         info.value.ciphertext = p.toUpperCase();
@@ -411,7 +420,7 @@
         :disabled="!info.encoding"
       ></textarea>
     </div>
-    <div v-if="info.ciphermode === 'permutation'">
+    <div v-if="['permutation', 'column'].includes(info.ciphermode)">
       <input type="text" v-model="permutationText" />
     </div>
     <div>

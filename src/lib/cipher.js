@@ -113,6 +113,47 @@ export function encipherBlockTransposition(text, key) {
   return newtext;
 }
 
+export function encipherColumnarTransposition(text, key) {
+  let plaintext = text.toUpperCase().split('');
+  let period = key.length;
+  for (let i = 0; i < plaintext.length % period; i++) {
+    plaintext += 'X';
+  }
+  let shuffled = encipherBlockTransposition(plaintext.join(''), key);
+  let blocks = [];
+  let blockSize = plaintext.length / period;
+  for (let i = 0; i < period; i++) {
+    blocks.push(plaintext.slice(i * blockSize, (i + 1) * blockSize));
+  }
+  let output = '';
+  for (let i = 0; i < blockSize; i++) {
+    for (let j = 0; j < period; j++) {
+      output += blocks[j][i];
+    }
+    output += ' ';
+  }
+  return output;
+}
+
+export function decipherColumnarTransposition(text, key) {
+  let plaintext = text.toUpperCase().split('');
+  let period = key.length;
+  let blocks = [];
+  let blockSize = plaintext.length / period;
+  for (let i = 0; i < period; i++) {
+    blocks.push(plaintext.slice(i * blockSize, (i + 1) * blockSize));
+  }
+  let shuffled = '';
+  for (let i = 0; i < blockSize; i++) {
+    for (let j = 0; j < period; j++) {
+      shuffled += blocks[j][i];
+    }
+    shuffled += ' ';
+  }
+  let output = encipherBlockTransposition(shuffled, inversePermutation(key));
+  return output;
+}
+
 const morse = {
   A: '.-',
   B: '-...',
