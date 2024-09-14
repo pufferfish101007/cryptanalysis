@@ -114,43 +114,41 @@ export function encipherBlockTransposition(text, key) {
 }
 
 export function encipherColumnarTransposition(text, key) {
-  let plaintext = text.toUpperCase().split('');
+  let plaintext = text.toUpperCase().replaceAll(/[^A-Z]/g, '');
   let period = key.length;
-  for (let i = 0; i < plaintext.length % period; i++) {
+  while (plaintext.length % period !== 0) {
     plaintext += 'X';
   }
-  let shuffled = encipherBlockTransposition(plaintext.join(''), key);
-  let blocks = [];
-  let blockSize = plaintext.length / period;
-  for (let i = 0; i < period; i++) {
-    blocks.push(plaintext.slice(i * blockSize, (i + 1) * blockSize));
-  }
   let output = '';
-  for (let i = 0; i < blockSize; i++) {
-    for (let j = 0; j < period; j++) {
-      output += blocks[j][i];
+  for (let i = 0; i < period; i++) {
+    for (let j = key[i]; j < plaintext.length; j += period) {
+      console.log(j)
+      output += plaintext[j];
+      if (output.length % 6 === 5) {
+        output += ' ';
+      } 
     }
-    output += ' ';
   }
   return output;
 }
 
 export function decipherColumnarTransposition(text, key) {
-  let plaintext = text.toUpperCase().split('');
+  let plaintext = text.toLowerCase().replaceAll(/[^a-z]/g, '');
   let period = key.length;
-  let blocks = [];
-  let blockSize = plaintext.length / period;
-  for (let i = 0; i < period; i++) {
-    blocks.push(plaintext.slice(i * blockSize, (i + 1) * blockSize));
+  while (plaintext.length % period !== 0) {
+    plaintext += 'x';
   }
-  let shuffled = '';
-  for (let i = 0; i < blockSize; i++) {
+  let blocksize = plaintext.length / period;
+  let output = '';
+  for (let i = 0; i < blocksize; i++) {
     for (let j = 0; j < period; j++) {
-      shuffled += blocks[j][i];
+      console.log(i, j, key.indexOf(j) * blocksize + i, plaintext[key.indexOf(j) * blocksize + i])
+      output += plaintext[key.indexOf(j) * blocksize + i];
+      if (output.length % 6 === 5) {
+        output += ' ';
+      } 
     }
-    shuffled += ' ';
   }
-  let output = encipherBlockTransposition(shuffled, inversePermutation(key));
   return output;
 }
 

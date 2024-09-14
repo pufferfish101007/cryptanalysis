@@ -1,3 +1,3 @@
 # cryptanalysis
 
-`public/WORDS.json` compiled from http://www.hit.uib.no/icame/brown/bcm.html
+`src/resources` compiled from https://raw.githubusercontent.com/nltk/nltk\_data/gh-pages/packages/corpora/brown.zip
