@@ -80,7 +80,7 @@ export function encipherVigenere(text, key) {
     if (/[A-Z]/.test(plaintext[i])) {
       counter++;
       plaintext[i] = String.fromCharCode(
-        ((plaintext[i].charCodeAt(0) - 39 + key[i % period]) % 26) + 97,
+        ((plaintext[i].charCodeAt(0) - 39 + key[counter % period]) % 26) + 97,
       );
     }
   }
@@ -122,11 +122,11 @@ export function encipherColumnarTransposition(text, key) {
   let output = '';
   for (let i = 0; i < period; i++) {
     for (let j = key[i]; j < plaintext.length; j += period) {
-      console.log(j)
+      console.log(j);
       output += plaintext[j];
       if (output.length % (period + 1) === period) {
         output += ' ';
-      } 
+      }
     }
   }
   return output;
@@ -142,11 +142,16 @@ export function decipherColumnarTransposition(text, key) {
   let output = '';
   for (let i = 0; i < blocksize; i++) {
     for (let j = 0; j < period; j++) {
-      console.log(i, j, key.indexOf(j) * blocksize + i, plaintext[key.indexOf(j) * blocksize + i])
+      console.log(
+        i,
+        j,
+        key.indexOf(j) * blocksize + i,
+        plaintext[key.indexOf(j) * blocksize + i],
+      );
       output += plaintext[key.indexOf(j) * blocksize + i];
       if (output.length % (period + 1) === period) {
         output += ' ';
-      } 
+      }
     }
   }
   return output;
@@ -189,10 +194,12 @@ const morse = {
   8: '---..',
   9: '----.',
   0: '-----',
-  ' ': '/'
+  ' ': '/',
 };
 
-const reverseMorse = Object.fromEntries(Object.entries(morse).map(([a, b]) => [b, a]));
+const reverseMorse = Object.fromEntries(
+  Object.entries(morse).map(([a, b]) => [b, a]),
+);
 
 const morsePunctMap = {
   ',': '--..--',
@@ -210,12 +217,14 @@ const morsePunctMap = {
   '@': '.--.-.',
 };
 
-const reverseMorsePunctMap = Object.fromEntries(Object.entries(morsePunctMap).map(([a, b]) => [b, a]));
+const reverseMorsePunctMap = Object.fromEntries(
+  Object.entries(morsePunctMap).map(([a, b]) => [b, a]),
+);
 
-console.log(reverseMorse, reverseMorsePunctMap)
+console.log(reverseMorse, reverseMorsePunctMap);
 
-export function decipherMorse(text, punct=false) {
-  console.log('dm')
+export function decipherMorse(text, punct = false) {
+  console.log('dm');
   let plaintext = '';
   let i = -1;
   $outer: while (true) {
@@ -229,20 +238,23 @@ export function decipherMorse(text, punct=false) {
       } else {
         chunk += text[i];
       }
-      console.log(chunk)
+      console.log(chunk);
     }
-    plaintext += reverseMorse[chunk] ?? ((punct ? reverseMorsePunctMap[chunk] : null) ?? chunk);
+    plaintext +=
+      reverseMorse[chunk] ??
+      (punct ? reverseMorsePunctMap[chunk] : null) ??
+      chunk;
   }
   return plaintext;
 }
 
-export function encipherMorse(text, punct=false) {
+export function encipherMorse(text, punct = false) {
   console.log('em');
   let plaintext = '';
   for (const i in text) {
     let t = text[i].toUpperCase();
-    console.log(morse[t])
-    console.log(morsePunctMap[t])
+    console.log(morse[t]);
+    console.log(morsePunctMap[t]);
     console.log(t);
     plaintext += (morse[t] ?? (punct ? (morsePunctMap[t] ?? t) : t)) + ' ';
   }
@@ -250,21 +262,21 @@ export function encipherMorse(text, punct=false) {
 }
 
 export function fiveSquareRowCol(idx) {
-  return [Math.floor(idx / 5), idx % 5]
+  return [Math.floor(idx / 5), idx % 5];
 }
 
 /**
- * 
+ *
  * @param {string[]} textChunks
- * @param {string[]} key 
- * @returns 
+ * @param {string[]} key
+ * @returns
  */
 function playfair(textChunks, key) {
-  let output = "";
+  let output = '';
   for (let i = 0; i < textChunks.length; i++) {
     const [a, b] = textChunks[i];
-    const [aRow, aCol] = fiveSquareRowCol(key.findIndex(x => x === a));
-    const [bRow, bCol] = fiveSquareRowCol(key.findIndex(x => x === b));
+    const [aRow, aCol] = fiveSquareRowCol(key.findIndex((x) => x === a));
+    const [bRow, bCol] = fiveSquareRowCol(key.findIndex((x) => x === b));
     if (aRow === bRow) {
       output += key[5 * aRow + ((aCol + 1) % 5)];
       output += key[5 * bRow + ((bCol + 1) % 5)];
@@ -283,13 +295,16 @@ function playfair(textChunks, key) {
 }
 
 /**
- * 
- * @param {string} text 
- * @param {string[][]} key 
- * @returns 
+ *
+ * @param {string} text
+ * @param {string[][]} key
+ * @returns
  */
 export function encipherPlayfair(text, key) {
-  text = (text ?? '').toLowerCase().replaceAll(/[^a-z]/g, '').replaceAll('j', 'i');
+  text = (text ?? '')
+    .toLowerCase()
+    .replaceAll(/[^a-z]/g, '')
+    .replaceAll('j', 'i');
   const chars = [];
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
@@ -311,24 +326,35 @@ export function encipherPlayfair(text, key) {
 
   let textChunks = [];
   for (let j = 0; j < chars.length; j++) {
-    if ((textChunks.at(-1) ?? ['','']).length == 2) {
+    if ((textChunks.at(-1) ?? ['', '']).length == 2) {
       textChunks.push([chars[j]]);
     } else {
       textChunks.at(-1).push(chars[j]);
     }
   }
-  textChunks = textChunks.map(cs => cs.join(''));
+  textChunks = textChunks.map((cs) => cs.join(''));
 
   return playfair(textChunks, key.flat());
 }
 
 /**
- * 
- * @param {string} text 
- * @param {string[][]} key 
- * @returns 
+ *
+ * @param {string} text
+ * @param {string[][]} key
+ * @returns
  */
 export function decipherPlayfair(text, key) {
-  const textChunks = (text ?? '').toLowerCase().replaceAll(/[^a-z]/g, '').replaceAll('j', 'i').match(/.{1,2}/g) ?? [];
-  return playfair(textChunks, key.toReversed().map(a => a.toReversed()).flat());
+  const textChunks =
+    (text ?? '')
+      .toLowerCase()
+      .replaceAll(/[^a-z]/g, '')
+      .replaceAll('j', 'i')
+      .match(/.{1,2}/g) ?? [];
+  return playfair(
+    textChunks,
+    key
+      .toReversed()
+      .map((a) => a.toReversed())
+      .flat(),
+  );
 }

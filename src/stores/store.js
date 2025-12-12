@@ -1,7 +1,7 @@
 import { deepToRaw } from '../lib/deep-to-raw.js';
 import { reactive, ref, toRaw } from 'vue';
 import { defineStore } from 'pinia';
-import { useStorage } from '@vueuse/core'
+import { useStorage } from '@vueuse/core';
 
 export const useStore = defineStore('store', () => {
   const workspaces = useStorage('workspaces', {});
@@ -12,42 +12,53 @@ export const useStore = defineStore('store', () => {
     totalTabs++;
     const id = crypto.randomUUID();
     tabs.value.push(id);
-    workspaces.value[id] = ({
+    workspaces.value[id] = {
       ciphertext: args.ciphertext ?? '',
       encoding: args.encoding ?? false,
       ciphermode: args.ciphermode ?? 'plaintext',
-      subletters: (
-        structuredClone(
-          toRaw(args.subletters ?? 'abcdefghijklmnopqrstuvwxyz'.split('')),
-        )
+      subletters: structuredClone(
+        toRaw(args.subletters ?? 'abcdefghijklmnopqrstuvwxyz'.split('')),
       ),
-      polySubLetters: (
-        structuredClone(
-          deepToRaw(
-            args.polySubLetters ??
-              Array.from({ length: 5 }, (_) =>
-                'abcdefghijklmnopqrstuvwxyz'.split(''),
-              ),
-          ),
-        )
+      polySubLetters: structuredClone(
+        deepToRaw(
+          args.polySubLetters ??
+            Array.from({ length: 5 }, (_) =>
+              'abcdefghijklmnopqrstuvwxyz'.split(''),
+            ),
+        ),
       ),
       polyalphabeticPeriod: args.polyalphabeticPeriod ?? 5,
       hillClimbThreshold: args.hillClimbThreshold ?? 2_000,
-      hillClimbThreads: args.hillClimbThreads ?? window.navigator.hardwareConcurrency,
+      hillClimbThreads:
+        args.hillClimbThreads ?? window.navigator.hardwareConcurrency,
       hillClimbResultsNum: args.hillClimbResultsNum ?? 1,
       probablePeriod: args.probablePeriod ?? 0,
       probablePeriodThreshold: args.probablePeriodThreshold ?? 20,
       name: args.name ?? `workspace ${totalTabs}`,
       assumeVigenere: args.assumeVigenere ?? false,
-      permutation: (structuredClone(toRaw(args.permutation ?? [0,1,2,3,4]))),
-      vigenereInitialGuess: args.vigenereInitialGuess ?? Array.from({ length: args.polyalphabeticPeriod ?? 5 }, _ => 'a').join(''),
+      permutation: structuredClone(toRaw(args.permutation ?? [0, 1, 2, 3, 4])),
+      vigenereInitialGuess:
+        args.vigenereInitialGuess ??
+        Array.from({ length: args.polyalphabeticPeriod ?? 5 }, (_) => 'a').join(
+          '',
+        ),
       useMorsePunct: args.useMorsePunct ?? false,
-      playfairKey: structuredClone(deepToRaw(args.playfairKey ?? ["abcde", "fghik", "lmnop", "qrstu", "vwxyz"].map(s => s.split('')))),
-    });
+      playfairKey: structuredClone(
+        deepToRaw(
+          args.playfairKey ??
+            ['abcde', 'fghik', 'lmnop', 'qrstu', 'vwxyz'].map((s) =>
+              s.split(''),
+            ),
+        ),
+      ),
+    };
   }
   function duplicateWorkspace(id, additionalArgs = {}) {
     addWorkspace(
-      Object.assign(structuredClone(deepToRaw(workspaces.value[id])), additionalArgs),
+      Object.assign(
+        structuredClone(deepToRaw(workspaces.value[id])),
+        additionalArgs,
+      ),
     );
   }
   function deleteWorkspace(id) {

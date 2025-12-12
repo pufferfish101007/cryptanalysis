@@ -23,8 +23,8 @@
       a[sortBy.value] < b[sortBy.value]
         ? -(+sortAscending.value * 2 - 1)
         : b[sortBy.value] < a[sortBy.value]
-        ? +sortAscending.value * 2 - 1
-        : 0,
+          ? +sortAscending.value * 2 - 1
+          : 0,
     );
   });
   function setSortBy(index) {

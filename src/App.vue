@@ -4,7 +4,7 @@
   import { useTemplateRef, computed, nextTick } from 'vue';
   import VueSimpleContextMenu from 'vue-simple-context-menu';
   const store = useStore();
-  console.log(store, store.workspaces)
+  console.log(store, store.workspaces);
   const contextMenu = useTemplateRef('wkspBtnCtxtMenu');
   const ctxtMenuOpts = computed(() =>
     (store.tabs.length > 1
