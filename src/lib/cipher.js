@@ -124,7 +124,7 @@ export function encipherColumnarTransposition(text, key) {
     for (let j = key[i]; j < plaintext.length; j += period) {
       console.log(j)
       output += plaintext[j];
-      if (output.length % 6 === 5) {
+      if (output.length % (period + 1) === period) {
         output += ' ';
       } 
     }
@@ -144,7 +144,7 @@ export function decipherColumnarTransposition(text, key) {
     for (let j = 0; j < period; j++) {
       console.log(i, j, key.indexOf(j) * blocksize + i, plaintext[key.indexOf(j) * blocksize + i])
       output += plaintext[key.indexOf(j) * blocksize + i];
-      if (output.length % 6 === 5) {
+      if (output.length % (period + 1) === period) {
         output += ' ';
       } 
     }
@@ -247,4 +247,88 @@ export function encipherMorse(text, punct=false) {
     plaintext += (morse[t] ?? (punct ? (morsePunctMap[t] ?? t) : t)) + ' ';
   }
   return plaintext;
+}
+
+export function fiveSquareRowCol(idx) {
+  return [Math.floor(idx / 5), idx % 5]
+}
+
+/**
+ * 
+ * @param {string[]} textChunks
+ * @param {string[]} key 
+ * @returns 
+ */
+function playfair(textChunks, key) {
+  let output = "";
+  for (let i = 0; i < textChunks.length; i++) {
+    const [a, b] = textChunks[i];
+    const [aRow, aCol] = fiveSquareRowCol(key.findIndex(x => x === a));
+    const [bRow, bCol] = fiveSquareRowCol(key.findIndex(x => x === b));
+    if (aRow === bRow) {
+      output += key[5 * aRow + ((aCol + 1) % 5)];
+      output += key[5 * bRow + ((bCol + 1) % 5)];
+      continue;
+    }
+    if (aCol === bCol) {
+      output += key[5 * ((aRow + 1) % 5) + aCol];
+      output += key[5 * ((bRow + 1) % 5) + bCol];
+      continue;
+    }
+    output += key[5 * aRow + bCol];
+    output += key[5 * bRow + aCol];
+  }
+
+  return output;
+}
+
+/**
+ * 
+ * @param {string} text 
+ * @param {string[][]} key 
+ * @returns 
+ */
+export function encipherPlayfair(text, key) {
+  text = (text ?? '').toLowerCase().replaceAll(/[^a-z]/g, '').replaceAll('j', 'i');
+  const chars = [];
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (chars.length % 2 === 0) {
+      chars.push(char);
+      continue;
+    }
+    if (chars.at(-1) === char) {
+      chars.push('x');
+      i--;
+      continue;
+    }
+    chars.push(char);
+  }
+
+  if (chars.length % 2 == 1) {
+    chars.push('x');
+  }
+
+  let textChunks = [];
+  for (let j = 0; j < chars.length; j++) {
+    if ((textChunks.at(-1) ?? ['','']).length == 2) {
+      textChunks.push([chars[j]]);
+    } else {
+      textChunks.at(-1).push(chars[j]);
+    }
+  }
+  textChunks = textChunks.map(cs => cs.join(''));
+
+  return playfair(textChunks, key.flat());
+}
+
+/**
+ * 
+ * @param {string} text 
+ * @param {string[][]} key 
+ * @returns 
+ */
+export function decipherPlayfair(text, key) {
+  const textChunks = (text ?? '').toLowerCase().replaceAll(/[^a-z]/g, '').replaceAll('j', 'i').match(/.{1,2}/g) ?? [];
+  return playfair(textChunks, key.toReversed().map(a => a.toReversed()).flat());
 }

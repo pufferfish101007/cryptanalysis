@@ -20,6 +20,8 @@ import {
   decipherMorse,
   encipherColumnarTransposition,
   decipherColumnarTransposition,
+  encipherPlayfair,
+  decipherPlayfair
 } from '../lib/cipher.js';
 import HillClimbWorker from '../lib/hill-climbing.js?worker';
 import { computed, reactive, ref, watch, watchEffect } from 'vue';
@@ -42,6 +44,7 @@ const modesEnum = [
   ['permutation', 'block transposition/permutation'],
   ['morse', 'morse code'],
   ['column', 'columnar transposition'],
+  ['playfair', 'playfair']
 ];
 const plaintext = ref('');
 const processingModal = ref();
@@ -146,6 +149,9 @@ function decipher() {
       console.log(c, c.prototype);
       plaintext.value = decipherColumnarTransposition(c, info.value.permutation);
       break;
+    case 'playfair':
+      plaintext.value = decipherPlayfair(c, info.value.playfairKey);
+      break;
     case 'plaintext':
     default:
       plaintext.value = c.toLowerCase();
@@ -184,6 +190,9 @@ watchEffect(() => {
       break;
     case 'column':
       info.value.ciphertext = encipherColumnarTransposition(p, info.value.permutation);
+      break;
+    case 'playfair':
+      info.value.ciphertext = encipherPlayfair(p, info.value.playfairKey);
       break;
     case 'plaintext':
     default:
@@ -239,6 +248,7 @@ const sendHillClimb = (type) => {
             break;
           case 'monoalphabetic-result':
           case 'polyalphabetic-result':
+          case 'playfair-result':
             /*info.subletters.forEach((_, i) => {
             info.subletters[i] = key[i];
           });*/
@@ -274,6 +284,9 @@ const sendHillClimb = (type) => {
                       ),
                   }
                   : {},
+                playfair: {
+                  playfairKey: results.pop().key,
+                }
               }[hillClimbType.value],
             });
             console.log('a');
@@ -368,6 +381,8 @@ const bruteForceVigenere = () => {
     period: info.value.polyalphabeticPeriod,
   });
 };
+
+console.log(info)
 </script>
 
 <template>
@@ -469,6 +484,9 @@ const bruteForceVigenere = () => {
           carry out letter frequency attack on vigenère cipher
         </button>
       </template>
+      <button v-else-if="info.ciphermode === 'playfair' && !info.encoding" @click="hillClimb('playfair')">
+        carry out stochastic hill climbing attack on playfair cipher
+      </button>
     </div>
   </div>
 
@@ -486,6 +504,16 @@ const bruteForceVigenere = () => {
   <div class="container">
     <div v-if="['permutation', 'column'].includes(info.ciphermode)">
       <label for="permutationText">Key:</label> <input type="text" v-model="permutationText" id="permutationText" />
+    </div>
+    <div v-if="info.ciphermode === 'playfair'">
+      Key (I/J combined):
+      <table>
+        <tr v-for="i in [0,1,2,3,4]" :key="i">
+          <td v-for="j in [0,1,2,3,4]" :key="j" style="width: 2ch">
+            <input type="text" v-model="info.playfairKey[i][j]" style="width: 2ch"></input>
+          </td>
+        </tr>
+      </table>
     </div>
   </div>
 
@@ -506,7 +534,7 @@ const bruteForceVigenere = () => {
   </div>
   <Modal ref="thresholdModal" :closeonblur="false" :close-buttons="['cancel', 'ok']"
     @close="thresholdModalCloseListener">
-    <template v-if="['monoalphabetic', 'polyyalphabetic'].includes(info.ciphermode)">
+    <template v-if="['monoalphabetic', 'polyalphabetic', 'playfair'].includes(info.ciphermode)">
       <label>
         hill climbing threshold:
         <input type="number" v-model="info.hillClimbThreshold" />

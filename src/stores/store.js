@@ -42,6 +42,7 @@ export const useStore = defineStore('store', () => {
       permutation: (structuredClone(toRaw(args.permutation ?? [0,1,2,3,4]))),
       vigenereInitialGuess: args.vigenereInitialGuess ?? Array.from({ length: args.polyalphabeticPeriod ?? 5 }, _ => 'a').join(''),
       useMorsePunct: args.useMorsePunct ?? false,
+      playfairKey: structuredClone(deepToRaw(args.playfairKey ?? ["abcde", "fghik", "lmnop", "qrstu", "vwxyz"].map(s => s.split('')))),
     });
   }
   function duplicateWorkspace(id, additionalArgs = {}) {
@@ -51,7 +52,7 @@ export const useStore = defineStore('store', () => {
   }
   function deleteWorkspace(id) {
     const index = tabs.value.indexOf(id);
-    focusWorkspace(tabs.value.at(index === tabs.length - 1 ? 0 : -1));
+    // focusWorkspace(tabs.value.at(index === tabs.length - 1 ? 0 : -1));
     tabs.value.splice(index, 1);
     totalTabs -= 1;
     //focusWorkspace(tabs.at(-1));

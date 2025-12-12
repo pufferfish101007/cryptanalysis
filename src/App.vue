@@ -4,16 +4,22 @@
   import { useTemplateRef, computed, nextTick } from 'vue';
   import VueSimpleContextMenu from 'vue-simple-context-menu';
   const store = useStore();
+  console.log(store, store.workspaces)
   const contextMenu = useTemplateRef('wkspBtnCtxtMenu');
-  const ctxtMenuOpts = computed(() => (store.tabs.length > 1 ? ['rename', 'duplicate', 'delete', 'new workspace'] : ['rename', 'duplicate', 'new workspace']).map((name) => ({
-    name
-  })));
+  const ctxtMenuOpts = computed(() =>
+    (store.tabs.length > 1
+      ? ['rename', 'duplicate', 'delete', 'new workspace']
+      : ['rename', 'duplicate', 'new workspace']
+    ).map((name) => ({
+      name,
+    })),
+  );
   const handleClick1 = (event, id) => {
     contextMenu.value.showMenu(event, id);
   };
   const ctxtMenuOptClicked = (event) => {
     switch (event.option.name) {
-      case "duplicate": {
+      case 'duplicate': {
         store.duplicateWorkspace(event.item, { name: undefined });
         break;
       }
@@ -25,7 +31,11 @@
         break;
       }
       case 'delete': {
+        const deletingSelf = store.focusedWorkspace === event.item;
         store.deleteWorkspace(event.item);
+        if (deletingSelf) {
+          store.focusWorkspace(store.tabs.at(-1));
+        }
         break;
       }
       case 'new workspace': {
@@ -34,7 +44,7 @@
         break;
       }
     }
-  }
+  };
 </script>
 
 <template>
