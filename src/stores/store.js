@@ -51,6 +51,7 @@ export const useStore = defineStore('store', () => {
             ),
         ),
       ),
+      playfairModification: args.playfairModification ?? false,
     };
   }
   function duplicateWorkspace(id, additionalArgs = {}) {

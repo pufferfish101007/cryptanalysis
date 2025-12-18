@@ -358,14 +358,15 @@ export function polyalphabeticHillCLimb(text, period, threshold = 25_000) {
  *
  * @param {string} text
  * @param {number} [threshold=25_000]
+ * @param {bool} [modified=false]
  * @returns {HillClimbResult}
  *
  */
-function playfairHillClimb(text, threshold = 25_000) {
+function playfairHillClimb(text, threshold = 25_000, modified = false) {
   let parentKey = ['abcde', 'fghik', 'lmnop', 'qrstu', 'vwxyz'].map((s) =>
     s.split(''),
   );
-  let parentPlaintext = decipherPlayfair(text, parentKey);
+  let parentPlaintext = decipherPlayfair(text, parentKey, modified);
   let parentFitness = tetragramFitness2(parentPlaintext);
   let counter = 0;
   while (counter < threshold) {
@@ -418,7 +419,7 @@ function playfairHillClimb(text, threshold = 25_000) {
     } else {
       childKey = parentKey.map((row) => row.toReversed()).toReversed();
     }
-    let childPlaintext = decipherPlayfair(text, childKey);
+    let childPlaintext = decipherPlayfair(text, childKey, modified);
     let childFitness = tetragramFitness2(childPlaintext);
     if (childFitness > parentFitness) {
       parentKey = childKey;
@@ -440,7 +441,15 @@ function playfairHillClimb(text, threshold = 25_000) {
 self.addEventListener(
   'message',
   ({
-    data: { event, text, threshold, period, assumeVigenere, initialGuess },
+    data: {
+      event,
+      text,
+      threshold,
+      period,
+      assumeVigenere,
+      initialGuess,
+      playfairModification,
+    },
   }) => {
     console.log(event, text, threshold, period, assumeVigenere);
     switch (event) {
@@ -466,7 +475,7 @@ self.addEventListener(
       case 'playfair':
         self.postMessage({
           event: 'playfair-result',
-          ...playfairHillClimb(text, threshold),
+          ...playfairHillClimb(text, threshold, playfairModification),
         });
       default:
         self.postMessage({ event: 'error', text: 'invalid event' });

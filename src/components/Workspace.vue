@@ -156,7 +156,11 @@
         );
         break;
       case 'playfair':
-        plaintext.value = decipherPlayfair(c, info.value.playfairKey);
+        plaintext.value = decipherPlayfair(
+          c,
+          info.value.playfairKey,
+          info.value.playfairModification,
+        );
         break;
       case 'plaintext':
       default:
@@ -201,7 +205,11 @@
         );
         break;
       case 'playfair':
-        info.value.ciphertext = encipherPlayfair(p, info.value.playfairKey);
+        info.value.ciphertext = encipherPlayfair(
+          p,
+          info.value.playfairKey,
+          info.value.playfairModification,
+        );
         break;
       case 'plaintext':
       default:
@@ -321,6 +329,7 @@
               .split('')
               .map((c) => c.charCodeAt(0) - 97)
           : null,
+        playfairModification: info.value.playfairModification,
       });
     }
     processingModal.value.show();
@@ -506,6 +515,11 @@
         </button>
       </div>
     </div>
+    <div v-if="info.ciphermode === 'playfair'">
+      <input type="checkbox" v-model="info.playfairModification" /><label
+        >Modifed playfair?</label
+      >
+    </div>
   </div>
 
   <!-- attacks -->
@@ -636,6 +650,10 @@
           :maxlength="info.polyalphabeticPeriod"
         />
       </label>
+    </template>
+    <template v-if="info.ciphermode === 'playfair'">
+      <label>Modifed playfair?</label>
+      <input type="checkbox" v-model="info.playfairModification" />
     </template>
   </Modal>
   <Modal ref="processingModal" :closeonblur="true" :close-buttons="[]"

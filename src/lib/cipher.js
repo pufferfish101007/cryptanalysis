@@ -269,22 +269,33 @@ export function fiveSquareRowCol(idx) {
  *
  * @param {string[]} textChunks
  * @param {string[]} key
+ * @param {bool} [modified=false]
  * @returns
  */
-function playfair(textChunks, key) {
+function playfair(textChunks, key, modified = false) {
   let output = '';
   for (let i = 0; i < textChunks.length; i++) {
     const [a, b] = textChunks[i];
     const [aRow, aCol] = fiveSquareRowCol(key.findIndex((x) => x === a));
     const [bRow, bCol] = fiveSquareRowCol(key.findIndex((x) => x === b));
     if (aRow === bRow) {
-      output += key[5 * aRow + ((aCol + 1) % 5)];
-      output += key[5 * bRow + ((bCol + 1) % 5)];
+      if (modified) {
+        output += key[5 * aRow + ((aCol + 4) % 5)];
+        output += key[5 * bRow + ((bCol + 4) % 5)];
+      } else {
+        output += key[5 * aRow + ((aCol + 1) % 5)];
+        output += key[5 * bRow + ((bCol + 1) % 5)];
+      }
       continue;
     }
     if (aCol === bCol) {
-      output += key[5 * ((aRow + 1) % 5) + aCol];
-      output += key[5 * ((bRow + 1) % 5) + bCol];
+      if (modified) {
+        output += key[5 * aRow + ((aCol + 4) % 5)];
+        output += key[5 * bRow + ((bCol + 4) % 5)];
+      } else {
+        output += key[5 * ((aRow + 1) % 5) + aCol];
+        output += key[5 * ((bRow + 1) % 5) + bCol];
+      }
       continue;
     }
     output += key[5 * aRow + bCol];
@@ -298,9 +309,10 @@ function playfair(textChunks, key) {
  *
  * @param {string} text
  * @param {string[][]} key
+ * @param {bool} [modifed=false]
  * @returns
  */
-export function encipherPlayfair(text, key) {
+export function encipherPlayfair(text, key, modified = false) {
   text = (text ?? '')
     .toLowerCase()
     .replaceAll(/[^a-z]/g, '')
@@ -334,16 +346,17 @@ export function encipherPlayfair(text, key) {
   }
   textChunks = textChunks.map((cs) => cs.join(''));
 
-  return playfair(textChunks, key.flat());
+  return playfair(textChunks, key.flat(), modified);
 }
 
 /**
  *
  * @param {string} text
  * @param {string[][]} key
+ * @param {bool} [modifed=false]
  * @returns
  */
-export function decipherPlayfair(text, key) {
+export function decipherPlayfair(text, key, modified = false) {
   const textChunks =
     (text ?? '')
       .toLowerCase()
@@ -356,5 +369,6 @@ export function decipherPlayfair(text, key) {
       .toReversed()
       .map((a) => a.toReversed())
       .flat(),
+    modified,
   );
 }
